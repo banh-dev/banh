@@ -1,0 +1,40 @@
+version: 1
+process: support_triage
+input:
+  type: json
+decisions:
+  department:
+    decide: one_of
+    question: Which team should handle this ticket?
+    options:
+      billing: Payments, refunds, invoices
+      support: Product problems and bugs
+      sales: New purchases
+  urgent:
+    decide: whether
+    question: Does this ticket require immediate attention?
+  severity:
+    decide: scale
+    question: How severe is the customer impact?
+    levels:
+      - negligible
+      - minor
+      - significant
+      - critical
+flow:
+  - when: urgent.probability >= 0.85
+    do: return
+    value:
+      route: escalation
+  - when: department.value == "billing"
+    do: return
+    value:
+      route: billing
+  - when: department.value == "sales"
+    do: return
+    value:
+      route: sales
+  - else:
+      do: return
+      value:
+        route: support

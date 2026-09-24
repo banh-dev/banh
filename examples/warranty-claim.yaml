@@ -1,0 +1,37 @@
+version: 1
+process: warranty_triage
+input:
+  type: json
+decisions:
+  valid_claim:
+    decide: whether
+    question: Does this appear to be a legitimate warranty claim?
+  issue:
+    decide: one_of
+    question: What is the most likely cause of the issue?
+    options:
+      manufacturing: Manufacturing defect
+      shipping: Damage during shipping
+      misuse: Damage caused by customer misuse
+      unknown: Insufficient information
+  severity:
+    decide: scale
+    question: How severe is the product damage?
+    levels: [cosmetic, minor, significant, unusable]
+flow:
+  - when: valid_claim.probability < 0.65
+    do: return
+    value:
+      action: human_review
+  - when: issue.value == "manufacturing"
+    do: return
+    value:
+      action: approve_replacement
+  - when: issue.value == "shipping"
+    do: return
+    value:
+      action: shipping_claim
+  - else:
+      do: return
+      value:
+        action: human_review
