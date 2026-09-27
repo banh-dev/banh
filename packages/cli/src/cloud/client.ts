@@ -79,6 +79,10 @@ export class CloudClient {
     if (!object(value) || typeof value.id !== 'string' || !/^run_[a-zA-Z0-9]+$/.test(value.id) ||
         value.workflow !== workflow || typeof value.version !== 'number' || !Number.isInteger(value.version) || value.version < 1 ||
         !['completed', 'failed'].includes(String(value.status)) ||
+        !Object.hasOwn(value, 'output') || !object(value.decisions) ||
+        (value.status === 'completed' ? !object(value.trace) || value.error !== undefined :
+          value.trace !== null && !object(value.trace)) ||
+        (value.status === 'failed' && (!object(value.error) || typeof value.error.code !== 'string')) ||
         (value.error !== undefined && (!object(value.error) || typeof value.error.code !== 'string'))) {
       throw new Error('Banh Cloud returned an invalid run response');
     }

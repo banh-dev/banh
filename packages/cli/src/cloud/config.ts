@@ -5,7 +5,7 @@ import { randomUUID } from 'node:crypto';
 
 export type Environment = Record<string, string | undefined>;
 export interface SavedConfig { apiUrl: string; token: string; accountId: string; expiresAt?: number }
-export const DEFAULT_API_URL = 'http://127.0.0.1:3000';
+export const DEFAULT_API_URL = 'https://api.banh.dev';
 export const envValue = (env: Environment, key: 'API_URL' | 'API_TOKEN' | 'ACCOUNT_ID') => env[`BANH_${key}`] ?? env[`banh_${key}`];
 
 /** Canonical API root; permit cleartext only on loopback for local development. */

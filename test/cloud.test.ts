@@ -75,12 +75,12 @@ it('validates and compiles workflows before upload and emits clean JSON', async 
   deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response({ workflow: 'warranty_triage', version: 4 }, 201));
   await cloudCommand('deploy', ['examples/warranty-claim.yaml', '--json'], { ...deps, env: { BANH_API_TOKEN: token } });
   const [url, options] = deps.fetch.mock.calls[1]!;
-  expect(url).toBe('http://127.0.0.1:3000/v1/accounts/acct_test/workflows/warranty_triage/versions');
+  expect(url).toBe('https://api.banh.dev/v1/accounts/acct_test/workflows/warranty_triage/versions');
   const body = JSON.parse(String(options?.body));
   expect(body.sourceYaml).toContain('process: warranty_triage');
   expect(body.compiled.definition.process).toBe('warranty_triage');
   expect(deps.stdout).toHaveBeenCalledOnce();
-  expect(JSON.parse(deps.stdout.mock.calls[0]![0])).toEqual({ workflow: 'warranty_triage', version: 4, invokeUrl: 'http://127.0.0.1:3000/v1/accounts/acct_test/workflows/warranty_triage/runs' });
+  expect(JSON.parse(deps.stdout.mock.calls[0]![0])).toEqual({ workflow: 'warranty_triage', version: 4, invokeUrl: 'https://api.banh.dev/v1/accounts/acct_test/workflows/warranty_triage/runs' });
 });
 
 it('does not contact cloud for invalid or oversized YAML', async () => {
@@ -320,4 +320,20 @@ it('validates billing commands before sending credentials',async()=>{
   const deps=dependencies();
   for(const args of [['checkout'],['checkout','enterprise'],['status','extra'],['unknown']]) await expect(cloudCommand('billing',args,deps)).rejects.toThrow('Usage');
   expect(deps.fetch).not.toHaveBeenCalled();
+});
+
+it.each([
+  { decisions: undefined }, { decisions: [] }, { trace: null }, { output: undefined },
+  { error: { code: 'unexpected' } },
+])('rejects malformed completed invocation responses', async override => {
+  const result = { id: 'run_test', workflow: 'triage', version: 1, status: 'completed', output: null, decisions: {}, trace: {}, ...override };
+  const client = new CloudClient({ apiUrl: 'https://api.banh.dev', token }, vi.fn<typeof fetch>().mockResolvedValue(response(result)));
+  await expect(client.invoke('acct_test', 'triage', {})).rejects.toThrow('invalid run response');
+});
+
+it('uses the hosted API for a fresh login unless explicitly overridden', async () => {
+  const deps = dependencies();
+  deps.fetch.mockResolvedValue(response(identity));
+  await cloudCommand('login', [], { ...deps, env: { BANH_API_TOKEN: token } });
+  expect(deps.fetch.mock.calls[0]![0]).toBe('https://api.banh.dev/v1/me');
 });

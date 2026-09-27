@@ -34,6 +34,17 @@ const responseSchema = z.object({
   usage: z.object({ input_tokens: z.number().int().nonnegative() }),
 });
 
+// Wire probabilities are commonly rounded to four decimal places.
+// Allow accumulated rounding error, capped below two percentage points.
+function validateDistribution(distribution: Record<string, number>, keys: string[], id: string): void {
+  const tolerance = Math.min(0.02, keys.length * 0.00005 + 1e-8);
+  const total = Object.values(distribution).reduce((sum, value) => sum + value, 0);
+  if (!keys.length || Object.keys(distribution).length !== keys.length ||
+      keys.some(key => !Object.hasOwn(distribution, key)) || Math.abs(total - 1) > tolerance) {
+    throw new BackendError(`Invalid probability distribution for "${id}"`);
+  }
+}
+
 /** Convert the SDK or HTTP response at the external boundary, preserving raw answers. */
 export function normalizeTypeSafeEvaluation(response: unknown, questions: Record<string, SystemOneQuestion>): SystemOneEvaluation {
   const parsed = responseSchema.safeParse(response);
@@ -47,6 +58,7 @@ export function normalizeTypeSafeEvaluation(response: unknown, questions: Record
     const answer = parsedAnswer.data;
     const metadata = answer.confidence === undefined ? {} : { confidence: answer.confidence };
     if (answer.type === 'choice' && question.type === 'one_of') {
+      validateDistribution(answer.probabilities, Object.keys(question.options), id);
       const selectedProbability = answer.probabilities[answer.choice];
       if (!Object.hasOwn(question.options, answer.choice) || typeof selectedProbability !== 'number' ||
           Object.keys(question.options).some(key => !Object.hasOwn(answer.probabilities, key))) {
@@ -58,6 +70,7 @@ export function normalizeTypeSafeEvaluation(response: unknown, questions: Record
       return [id, { id, kind: 'whether', value: answer.noul >= 0.5, probability: answer.noul, ...metadata, raw }];
     }
     if (answer.type === 'score' && question.type === 'scale') {
+      validateDistribution(answer.probabilities, question.levels.map((_, index) => String(index)), id);
       if (answer.score < 0 || answer.score > question.levels.length - 1) throw new BackendError(`Out-of-range score for "${id}"`);
       return [id, { id, kind: 'scale', value: answer.score, probabilities: answer.probabilities, ...metadata, raw }];
     }

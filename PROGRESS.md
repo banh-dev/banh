@@ -3,6 +3,11 @@
 The original local-runtime implementation in PLAN.md is complete. This covers
 M1 of the broader Banh implementation plan, not the complete hosted v0.
 
+## Historical milestone records
+
+The entries below preserve earlier verification results; see the current alpha
+status at the end of this file.
+
 ## M3 — Auth0 revision
 
 - Replaced manual developer login with Auth0 device authorization. The CLI discovers
@@ -42,8 +47,7 @@ M1 of the broader Banh implementation plan, not the complete hosted v0.
 - M3 now adds CLI login/logout/whoami/deploy, private local credential storage,
   API-bound saved tokens, environment overrides, local pre-upload compilation,
   and an end-to-end CLI test against local HTTP and Postgres.
-- Production deployment remains
-  unimplemented.
+- Production deployment was not yet implemented at this milestone.
 
 Package extraction verification:
 
@@ -98,7 +102,8 @@ Exact model probabilities and routes are not asserted in the integration test.
 - Unknown template references and partial-string interpolation are rejected
   before inference. Only returned values are interpolated, never object keys.
 - The library caller owns backend cleanup; CLI runs always close their backend.
-- External actions, additional providers, retries, and agent loops remain out of scope.
+- External actions, retries, and agent loops remain out of scope. Additional
+  HTTP providers were subsequently added for the alpha.
 
 The initial implementation is committed. Subsequent milestones below describe
 the local cloud and CLI integration.
@@ -120,3 +125,15 @@ the local cloud and CLI integration.
 - Both use developer authentication and support JSON output and API overrides.
 - 161 OSS tests and Postgres-backed CLI checks cover history, inspection,
   empty pages, malformed responses, missing runs, and denied access.
+
+## Current alpha preparation — 2026-09-27
+
+- Target version is 0.1.0-alpha.0 with MIT licensing and the npm alpha tag.
+- CLI cloud commands default to https://api.banh.dev; saved configuration and
+  explicit overrides still take precedence. Cloud is an invitation-only pilot.
+- Six packages include release metadata, licenses, and package documentation.
+- Probability distributions require complete expected keys and totals within a
+  rounding tolerance. Cloud invocation responses require output/decisions/trace.
+- Added CLI version output, a clean tarball installation smoke test, and Linux CI.
+- Package names remain provisional. Publication awaits ownership of banh and @banh;
+  no packages have been published as part of this preparation.

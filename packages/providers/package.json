@@ -1,13 +1,14 @@
 {
   "name": "@banh/providers",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0-alpha.0",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -25,5 +26,20 @@
       "import": "./dist/index.js"
     }
   },
-  "types": "./dist/index.d.ts"
+  "types": "./dist/index.d.ts",
+  "license": "MIT",
+  "description": "B\u00e1nh native and HTTP provider selection",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/banh-dev/banh.git",
+    "directory": "packages/providers"
+  },
+  "bugs": {
+    "url": "https://github.com/banh-dev/banh/issues"
+  },
+  "homepage": "https://github.com/banh-dev/banh#readme",
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  }
 }

@@ -80,3 +80,28 @@ it('translates Banh primitives to the SDK and HTTP protocol', () => {
     severity: { type: 'score', instructions: 'How bad?', criteria: ['low', 'high'] },
   });
 });
+
+it.each([
+  { '0': 0.5, '1': 0.5 }, {},
+  { '0': 0.1, '1': 0.1, '2': 0.1, '3': 0.1 },
+  { '0': 0, '1': 0, '2': 0.4, '3': 0.6, extra: 0 },
+])('rejects incomplete or invalid score distributions', probabilities => {
+  const raw = response();
+  raw.answers.severity.probabilities = probabilities as typeof raw.answers.severity.probabilities;
+  expect(() => normalizeLayaEvaluation(raw, questions)).toThrow('distribution');
+});
+
+it.each([
+  { billing: 0.1, support: 0.1, sales: 0.1 },
+  { billing: 0.9, support: 0.08, sales: 0.02, extra: 0 },
+])('rejects invalid choice distributions', probabilities => {
+  const raw = response();
+  raw.answers.department.probabilities = probabilities;
+  expect(() => normalizeLayaEvaluation(raw, questions)).toThrow('distribution');
+});
+
+it('accepts rounding error in otherwise complete distributions', () => {
+  const raw = response();
+  raw.answers.department.probabilities = { billing: 0.3333, support: 0.3333, sales: 0.3333 };
+  expect(normalizeLayaEvaluation(raw, questions).decisions.department!.probability).toBe(0.3333);
+});

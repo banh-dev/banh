@@ -321,5 +321,5 @@ own licenses; model weights are downloaded separately and are not included in np
 artifacts. Native inference dependencies are installed with the CLI even when you
 only use HTTP. HTTP-only library users can install `@banh/typesafe` once published.
 
-See [release preparation](RELEASING.md) and [changes](CHANGELOG.md). Release
+See [release preparation](https://github.com/banh-dev/banh/blob/main/RELEASING.md) and [changes](https://github.com/banh-dev/banh/blob/main/CHANGELOG.md). Release
 artifacts must pass a clean npm installation test outside the workspace.

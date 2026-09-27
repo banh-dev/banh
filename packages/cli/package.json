@@ -1,13 +1,14 @@
 {
   "name": "banh",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0-alpha.0",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -20,5 +21,20 @@
   },
   "bin": {
     "banh": "./dist/index.js"
+  },
+  "license": "MIT",
+  "description": "CLI for bounded model decisions and deterministic workflows",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/banh-dev/banh.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/banh-dev/banh/issues"
+  },
+  "homepage": "https://github.com/banh-dev/banh#readme",
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
   }
 }

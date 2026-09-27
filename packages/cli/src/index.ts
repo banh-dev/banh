@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { readFileSync } from 'node:fs';
 import { validateCommand } from './validate.js';
 import { runCommand } from './run.js';
 import { cloudCommand } from './cloud/commands.js';
@@ -19,6 +20,7 @@ const help = `Usage:
   banh billing [status | checkout <starter|pro> | plan <starter|pro> | portal] [--json] [--api-url <url>]
 
 Options:
+  --version           Print the CLI version
   --json              Emit machine-readable JSON on stdout
   --verbose           Emit execution events on stderr
   --provider <name>   native (default) or http
@@ -30,7 +32,7 @@ Options:
   --cache-dir <dir>    Set the model download cache
   --revision <rev>     Select a model repository revision
 
-Cloud commands default to http://127.0.0.1:3000 until a login is saved.
+Cloud commands default to https://api.banh.dev until a login is saved.
 Environment: BANH_API_URL, BANH_API_TOKEN, BANH_ACCOUNT_ID.
 
 Inference environment: BANH_PROVIDER, BANH_MODEL, BANH_INFERENCE_BASE_URL,
@@ -40,6 +42,9 @@ Validation never loads a model. Native run downloads model weights on first use.
 const args = process.argv.slice(2);
 try {
   if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) console.log(help);
+  else if (args.length === 1 && (args[0] === '--version' || args[0] === '-V')) {
+    console.log(JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version);
+  }
   else if (args[0] === 'validate' && args.length === 2) await validateCommand(args[1]!);
   else if (args[0] === 'run') await runCommand(args.slice(1));
   else if (args[0] === 'login' || args[0] === 'logout' || args[0] === 'whoami' || args[0] === 'deploy' || args[0] === 'invoke' || args[0] === 'runs' || args[0] === 'inspect' || args[0] === 'billing') await cloudCommand(args[0], args.slice(1));
