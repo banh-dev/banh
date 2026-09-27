@@ -7,10 +7,16 @@ const help = `Usage:
   banh validate <workflow.yaml>
   banh run <workflow.yaml> (--input <file> | --text <text>) [options]
 
-  banh login [--api-url <url>]
+  banh login [--api-url <url>] [--no-browser]
   banh logout
   banh whoami [--json] [--api-url <url>]
   banh deploy <workflow.yaml> [--json] [--api-url <url>]
+  banh invoke <workflow> (--input <json-file> | --text <text>) [--json] [--api-url <url>]
+
+  banh runs <workflow> [--limit <1-100>] [--offset <0-10000>] [--json] [--api-url <url>]
+  banh inspect <run-id> [--json] [--api-url <url>]
+
+  banh billing [status | checkout <starter|pro> | plan <starter|pro> | portal] [--json] [--api-url <url>]
 
 Options:
   --json              Emit machine-readable JSON on stdout
@@ -36,7 +42,7 @@ try {
   if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) console.log(help);
   else if (args[0] === 'validate' && args.length === 2) await validateCommand(args[1]!);
   else if (args[0] === 'run') await runCommand(args.slice(1));
-  else if (args[0] === 'login' || args[0] === 'logout' || args[0] === 'whoami' || args[0] === 'deploy') await cloudCommand(args[0], args.slice(1));
+  else if (args[0] === 'login' || args[0] === 'logout' || args[0] === 'whoami' || args[0] === 'deploy' || args[0] === 'invoke' || args[0] === 'runs' || args[0] === 'inspect' || args[0] === 'billing') await cloudCommand(args[0], args.slice(1));
   else throw new Error(help);
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));

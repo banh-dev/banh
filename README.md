@@ -1,5 +1,8 @@
 # Banh
 
+User guides are maintained in the sibling [Banh documentation site](../banh-docs/README.md).
+Start with the [local quickstart](../banh-docs/src/content/docs/getting-started/quickstart.md).
+
 A small TypeScript runtime and YAML language for bounded System One decisions,
 followed by deterministic flow rules. A selected provider evaluates all decisions in one batch; Banh returns the first matching rule's value. There are no agent loops
 or arbitrary code execution.
@@ -144,20 +147,22 @@ First, in `banh-cloud`:
 ```sh
 make migrate
 make up
-make provision
+# Configure Auth0; see banh-cloud/AUTH0.md.
 ```
 
-Provisioning prints a **developer token** (`banh_dev_...`) and a separate invocation
-API key (`banh_sk_...`). Use the developer token for CLI login.
+Configure a development Auth0 tenant using `banh-cloud/AUTH0.md`. Developer login
+uses Auth0 device authorization and creates a personal Banh account on first login.
+Existing accounts are reused; manual provisioning is optional.
 
 Then, from this repository:
 
 ```sh
 pnpm build
 node packages/cli/dist/index.js login --api-url http://127.0.0.1:3000
-# Paste the developer token at the hidden prompt.
+# Authorize the displayed user code in your browser.
 node packages/cli/dist/index.js whoami
 node packages/cli/dist/index.js deploy examples/warranty-claim.yaml
+node packages/cli/dist/index.js invoke warranty_triage --input examples/inputs/warranty-claim.json --json
 node packages/cli/dist/index.js logout
 ```
 
@@ -173,7 +178,38 @@ Neither command loads Laya.
 
 **Here, deploy means uploading YAML to your local Banh Cloud database.** It does
 not deploy infrastructure or publish anything on the internet. Cloud execution
-still uses the explicitly labeled fake backend until M4. Local `banh run` uses Laya.
+uses Laya by default; an explicit fake backend remains available for tests.
+
+### Cloud billing
+
+Cloud invocation requires a paid subscription (currently Stripe sandbox only).
+Local `banh run` remains free and does not contact billing.
+
+```sh
+node packages/cli/dist/index.js billing status
+node packages/cli/dist/index.js billing checkout starter
+node packages/cli/dist/index.js billing plan pro
+node packages/cli/dist/index.js billing portal
+```
+
+Open the printed Stripe URL for Checkout or payment/cancellation management. Status
+supports `--json` and reports used, reserved, remaining runs, and the period end.
+See `banh-cloud/BILLING.md` for local setup. Only the account billing owner can
+manage payment; account developers can view usage. No overages are charged.
+
+### Run history
+
+```sh
+node packages/cli/dist/index.js runs warranty_triage --limit 10
+node packages/cli/dist/index.js inspect run_YOUR_RUN_ID --json
+```
+
+`runs` lists newest first with status, version, duration, and creation time. Use
+`--limit` (1–100, default 50) and `--offset` (0–10000, default 0) for pagination.
+`inspect` includes stored input, decisions/probabilities, output, trace, and errors.
+Both commands support `--json` and `--api-url` and require developer login;
+invocation keys cannot read history. Inspecting a failed run exits successfully;
+missing records, invalid input, and authorization errors exit nonzero.
 
 ### Configuration
 
@@ -185,7 +221,7 @@ Resolution order for cloud settings:
 
 - API URL: `--api-url`, then `BANH_API_URL`, then saved URL, then the local default.
 - Token: `BANH_API_TOKEN`, then the saved token for that exact API URL.
-- Account: `BANH_ACCOUNT_ID`, otherwise the account identified by the developer token.
+- Account: `BANH_ACCOUNT_ID`, otherwise an account belonging to the verified Auth0 identity.
 
 The lowercase-prefix aliases `banh_API_URL`, `banh_API_TOKEN`, and
 `banh_ACCOUNT_ID` from the implementation plan also work; uppercase names take
@@ -193,7 +229,9 @@ precedence. Changing the API URL does not forward a saved token to a different
 server. Environment tokens can be used by `whoami` and `deploy` without logging
 in or writing credentials, which is useful in CI.
 
-Login validates the token with `/v1/me` before saving it. Credentials are stored
+Login discovers Auth0 settings from `/v1/auth/config`, opens the browser, and polls
+for an access token. `--no-browser` prints instructions without launching a browser.
+No client secret is used. Login validates the token with `/v1/me` before saving it. Credentials are stored
 in a local JSON file with owner-only permissions on Unix:
 
 - Linux: `$XDG_CONFIG_HOME/banh/config.json` or `~/.config/banh/config.json`.
@@ -203,7 +241,10 @@ in a local JSON file with owner-only permissions on Unix:
 `BANH_CONFIG_DIR` selects a separate Banh configuration directory for isolated
 profiles or tests. Saved credentials are plaintext in that private file; they
 are not stored in an OS keychain. `logout` removes the saved login locally. It
-does not revoke the server-issued token or unset environment variables.
+does not revoke the access token, end the browser's Auth0 SSO session, or unset
+environment variables. This revision does not store refresh tokens: repeat login
+when the access token expires. `BANH_API_TOKEN` must be a valid Auth0 user access
+token for the configured API/client; old `banh_dev_...` credentials no longer work.
 
 ## Workflow syntax
 

@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 export type Environment = Record<string, string | undefined>;
-export interface SavedConfig { apiUrl: string; token: string; accountId: string }
+export interface SavedConfig { apiUrl: string; token: string; accountId: string; expiresAt?: number }
 export const DEFAULT_API_URL = 'http://127.0.0.1:3000';
 export const envValue = (env: Environment, key: 'API_URL' | 'API_TOKEN' | 'ACCOUNT_ID') => env[`BANH_${key}`] ?? env[`banh_${key}`];
 
@@ -39,7 +39,7 @@ export async function readConfig(path: string): Promise<SavedConfig | undefined>
   try {
     const value = JSON.parse(source) as Partial<SavedConfig>;
     if (!value || typeof value.apiUrl !== 'string' || typeof value.token !== 'string' || typeof value.accountId !== 'string' || !value.token || !/^acct_[a-zA-Z0-9]+$/.test(value.accountId)) throw new Error();
-    return { apiUrl: normalizeApiUrl(value.apiUrl), token: value.token, accountId: value.accountId };
+    return { apiUrl: normalizeApiUrl(value.apiUrl), token: value.token, accountId: value.accountId, ...(typeof value.expiresAt === 'number' && Number.isFinite(value.expiresAt) ? { expiresAt: value.expiresAt } : {}) };
   } catch { throw new Error('Invalid Banh configuration. Run banh logout, then banh login to replace it.'); }
 }
 
@@ -63,5 +63,6 @@ export function resolveConnection(env: Environment, saved?: SavedConfig, apiOver
   const token = environmentToken ?? (sameServer ? saved?.token : undefined);
   const accountId = envValue(env, 'ACCOUNT_ID') ?? (environmentToken === undefined && sameServer ? saved?.accountId : undefined);
   if (!token) throw new Error('No credentials for this API URL. Run banh login or set BANH_API_TOKEN.');
+  if (environmentToken === undefined && sameServer && saved?.expiresAt !== undefined && saved.expiresAt <= Date.now()) throw new Error('Auth0 session expired. Run banh login again.');
   return { apiUrl, token, accountId };
 }

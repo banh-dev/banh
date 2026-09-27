@@ -9,7 +9,7 @@ import { CloudClient } from '../packages/cli/src/cloud/client.js';
 import { configPath, normalizeApiUrl, readConfig, saveConfig } from '../packages/cli/src/cloud/config.js';
 
 const identity = { user: { id: 'usr_test', email: 'dev@example.test' }, account: { id: 'acct_test', name: 'Test account' } };
-const token = `banh_dev_${'a'.repeat(64)}`;
+const token = 'auth0-access-token';
 let directory: string;
 let file: string;
 beforeEach(async () => { directory = await mkdtemp(join(tmpdir(), 'banh-cli-')); file = join(directory, 'banh', 'config.json'); });
@@ -18,17 +18,15 @@ const response = (body: unknown, status = 200) => new Response(JSON.stringify(bo
 const saved = () => ({ apiUrl: 'http://localhost:3000', token, accountId: 'acct_test' });
 function dependencies() { return { env: {}, configFile: file, stdout: vi.fn(), fetch: vi.fn<typeof fetch>() }; }
 
-it('validates a prompted token before saving it privately', async () => {
+it('validates an environment access token before saving it privately', async () => {
   const deps = dependencies(); deps.fetch.mockResolvedValue(response(identity));
-  const promptToken = vi.fn().mockResolvedValue(token);
-  await cloudCommand('login', ['--api-url', 'http://localhost:3000/v1/'], { ...deps, promptToken });
+  await cloudCommand('login', ['--api-url', 'http://localhost:3000/v1/'], { ...deps, env: { BANH_API_TOKEN: token } });
   expect(await readConfig(file)).toEqual(saved());
   if (process.platform !== 'win32') {
     expect((await stat(file)).mode & 0o777).toBe(0o600);
     expect((await stat(join(directory, 'banh'))).mode & 0o777).toBe(0o700);
   }
   expect(deps.fetch.mock.calls[0]![0]).toBe('http://localhost:3000/v1/me');
-  expect(promptToken).toHaveBeenCalledOnce();
   expect(deps.stdout.mock.calls.flat().join(' ')).not.toContain(token);
 });
 
@@ -170,4 +168,156 @@ it('times out network requests', async () => {
   try {
     await expect(new CloudClient({ apiUrl: `http://127.0.0.1:${address.port}`, token }, fetch, 20).whoami()).rejects.toThrow('timed out');
   } finally { server.closeAllConnections(); server.close(); await once(server, 'close'); }
+});
+
+it('completes device login through cloud discovery and saves only a verified access token', async () => {
+  const deps = dependencies();
+  const expiryBase = Date.now();
+  const openBrowser = vi.fn(async () => {});
+  deps.fetch.mockResolvedValueOnce(response({ issuer: 'https://tenant.example/', clientId: 'native-cli', audience: 'api' }))
+    .mockResolvedValueOnce(response({ device_code: 'device-secret', user_code: 'ABCD', verification_uri: 'https://tenant.example/activate', expires_in: 60, interval: 1 }))
+    .mockResolvedValueOnce(response({ access_token: token, token_type: 'Bearer', expires_in: 3600 }))
+    .mockResolvedValueOnce(response(identity));
+  await cloudCommand('login', ['--api-url', 'http://localhost:3000', '--no-browser'], {
+    ...deps, device: { sleep: async () => {}, now: () => expiryBase, openBrowser },
+  });
+  expect(await readConfig(file)).toEqual({ ...saved(), expiresAt: expiryBase + 3_600_000 });
+  expect(openBrowser).not.toHaveBeenCalled();
+  expect(deps.fetch.mock.calls.map(call => call[0])).toEqual([
+    'http://localhost:3000/v1/auth/config', 'https://tenant.example/oauth/device/code',
+    'https://tenant.example/oauth/token', 'http://localhost:3000/v1/me',
+  ]);
+  expect(deps.fetch.mock.calls[3]![1]?.headers).toMatchObject({ authorization: `Bearer ${token}` });
+  const output = deps.stdout.mock.calls.flat().join(' ');
+  expect(output).toContain('Logged in as');
+  expect(output).not.toContain(token);
+  expect(output).not.toContain('device-secret');
+});
+
+it('invokes with saved login and sends JSON input without fetching identity', async () => {
+  await saveConfig(file, saved());
+  const deps = dependencies();
+  const result = { id: 'run_test', workflow: 'warranty_triage', version: 1, status: 'completed', output: { action: 'approve' }, decisions: {}, trace: { backend: 'laya' } };
+  deps.fetch.mockResolvedValue(response(result));
+  await cloudCommand('invoke', ['warranty_triage', '--input', 'examples/inputs/warranty-claim.json', '--json'], deps);
+  expect(deps.fetch).toHaveBeenCalledOnce();
+  expect(deps.fetch.mock.calls[0]![0]).toBe('http://localhost:3000/v1/accounts/acct_test/workflows/warranty_triage/runs');
+  expect(JSON.parse(String(deps.fetch.mock.calls[0]![1]?.body)).input.product).toBe('Desk lamp');
+  expect(JSON.parse(deps.stdout.mock.calls[0]![0])).toEqual(result);
+});
+
+it('supports invocation keys with explicit account and text input', async () => {
+  const deps = dependencies();
+  deps.fetch.mockResolvedValue(response({ id: 'run_text', workflow: 'triage', version: 1, status: 'completed', output: {}, decisions: {}, trace: {} }));
+  await cloudCommand('invoke', ['triage', '--text', 'Help'], { ...deps, env: { BANH_API_TOKEN: 'banh_sk_test', BANH_ACCOUNT_ID: 'acct_test' } });
+  expect(deps.fetch).toHaveBeenCalledOnce();
+  expect(JSON.parse(String(deps.fetch.mock.calls[0]![1]?.body))).toEqual({ input: 'Help' });
+});
+
+it('prints persisted failed runs as JSON and reports failure', async () => {
+  await saveConfig(file, saved());
+  const deps = dependencies();
+  const result = { id: 'run_failed', workflow: 'triage', version: 1, status: 'failed', output: null, decisions: {}, trace: null, error: { code: 'EXECUTION_TIMEOUT' } };
+  deps.fetch.mockResolvedValue(response(result, 504));
+  await expect(cloudCommand('invoke', ['triage', '--text', 'Help', '--json'], deps)).rejects.toThrow('EXECUTION_TIMEOUT');
+  expect(JSON.parse(deps.stdout.mock.calls[0]![0])).toEqual(result);
+});
+
+it('rejects malformed invocation input before sending requests', async () => {
+  const deps = dependencies();
+  for (const args of [['triage'], ['../bad', '--text', 'Hi'], ['triage', '--input', 'missing.json'], ['triage', '--input', 'file', '--text', 'Hi']]) {
+    await expect(cloudCommand('invoke', args, deps)).rejects.toThrow();
+  }
+  expect(deps.fetch).not.toHaveBeenCalled();
+});
+
+const historyRun = { id: 'run_history', workflow: 'triage', version: 2, status: 'completed', durationMs: 123.4,
+  createdAt: '2026-09-25T17:00:00.000Z', completedAt: '2026-09-25T17:00:00.123Z',
+  output: { action: 'review' }, decisions: { valid: { probability: 0.3 } }, trace: { backend: 'laya' } };
+
+it('lists runs with pagination and clean JSON', async () => {
+  await saveConfig(file, saved());
+  const deps = dependencies();
+  const page = { runs: [historyRun], limit: 10, offset: 20 };
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response(page));
+  await cloudCommand('runs', ['triage', '--limit', '10', '--offset', '20', '--json'], deps);
+  expect(deps.fetch.mock.calls[1]![0]).toBe('http://localhost:3000/v1/accounts/acct_test/workflows/triage/runs?limit=10&offset=20');
+  expect(deps.stdout).toHaveBeenCalledOnce();
+  expect(JSON.parse(deps.stdout.mock.calls[0]![0])).toEqual(page);
+});
+
+it('renders empty history and running records', async () => {
+  await saveConfig(file, saved());
+  const deps = dependencies();
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response({ runs: [], limit: 50, offset: 0 }));
+  await cloudCommand('runs', ['triage'], deps);
+  expect(deps.stdout).toHaveBeenLastCalledWith('No runs found for triage.');
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response({ runs: [{ ...historyRun, status: 'running', durationMs: null, completedAt: null, output: null, trace: null }], limit: 50, offset: 0 }));
+  await cloudCommand('runs', ['triage'], deps);
+  expect(deps.stdout.mock.lastCall![0]).toContain('running');
+  expect(deps.stdout.mock.lastCall![0]).toContain('v2');
+});
+
+it('inspects failed runs with full details without failing the inspection command', async () => {
+  await saveConfig(file, saved());
+  const deps = dependencies();
+  const record = { ...historyRun, status: 'failed', input: { message: 'help' }, error: { code: 'EXECUTION_TIMEOUT', message: 'Workflow execution timed out' } };
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response(record));
+  await cloudCommand('inspect', ['run_history'], deps);
+  expect(deps.fetch.mock.calls[1]![0]).toBe('http://localhost:3000/v1/accounts/acct_test/runs/run_history');
+  const output = deps.stdout.mock.lastCall![0];
+  for (const part of ['EXECUTION_TIMEOUT', 'Input', 'help', 'Decisions', '0.3', 'Output', 'Trace', 'laya']) expect(output).toContain(part);
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response(record));
+  await cloudCommand('inspect', ['run_history', '--json'], deps);
+  expect(JSON.parse(deps.stdout.mock.lastCall![0])).toEqual(record);
+});
+
+it('rejects invalid history arguments before authentication', async () => {
+  const deps = dependencies();
+  for (const args of [['triage', '--limit', '0'], ['triage', '--limit', '101'], ['triage', '--offset', '-1'], ['triage', '--offset', '10001'], ['triage', '--limit', '1.5'], ['../bad']]) {
+    await expect(cloudCommand('runs', args, deps)).rejects.toThrow();
+  }
+  await expect(cloudCommand('inspect', ['../run'], deps)).rejects.toThrow('Invalid run ID');
+  expect(deps.fetch).not.toHaveBeenCalled();
+});
+
+it('rejects malformed and mismatched history responses', async () => {
+  const fetcher = vi.fn<typeof fetch>();
+  const client = new CloudClient(saved(), fetcher);
+  fetcher.mockResolvedValueOnce(response({ runs: [{ ...historyRun, workflow: 'other' }], limit: 50, offset: 0 }));
+  await expect(client.runs('acct_test', 'triage')).rejects.toThrow('invalid run list');
+  fetcher.mockResolvedValueOnce(response({ ...historyRun, input: {}, id: 'run_other' }));
+  await expect(client.inspect('acct_test', 'run_history')).rejects.toThrow('invalid run record');
+  fetcher.mockResolvedValueOnce(response(historyRun));
+  await expect(client.inspect('acct_test', 'run_history')).rejects.toThrow('invalid run record');
+  fetcher.mockResolvedValueOnce(response({ ...historyRun, input: {}, durationMs: 'slow' }));
+  await expect(client.inspect('acct_test', 'run_history')).rejects.toThrow('invalid run record');
+});
+
+it('does not leak error response bodies when history access is denied or missing', async () => {
+  const fetcher = vi.fn<typeof fetch>();
+  const client = new CloudClient(saved(), fetcher);
+  fetcher.mockResolvedValueOnce(response({ secret: token }, 403));
+  await expect(client.runs('acct_test', 'triage')).rejects.toThrow('Access denied');
+  fetcher.mockResolvedValueOnce(response({ secret: token }, 404));
+  await expect(client.inspect('acct_test', 'run_history')).rejects.toThrow('not found in the selected account');
+});
+
+it('reports billing usage and opens only validated Stripe checkout URLs', async () => {
+  await saveConfig(file, saved()); const deps=dependencies();
+  const status={status:'active',plan:'starter',periodStart:'2026-09-01T00:00:00Z',periodEnd:'2026-10-01T00:00:00Z',limit:1000,used:12,reserved:1,remaining:987,retentionDays:7,cancelAtPeriodEnd:false};
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response(status));
+  await cloudCommand('billing',['--json'],deps);
+  expect(JSON.parse(deps.stdout.mock.lastCall![0])).toEqual(status);
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response({url:'https://checkout.stripe.com/test'}));
+  await cloudCommand('billing',['checkout','starter'],deps);
+  expect(deps.stdout.mock.lastCall![0]).toBe('Open https://checkout.stripe.com/test');
+  expect(JSON.parse(String(deps.fetch.mock.lastCall![1]?.body))).toEqual({plan:'starter'});
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response({url:'https://attacker.example'}));
+  await expect(cloudCommand('billing',['portal'],deps)).rejects.toThrow('Invalid billing URL');
+});
+it('validates billing commands before sending credentials',async()=>{
+  const deps=dependencies();
+  for(const args of [['checkout'],['checkout','enterprise'],['status','extra'],['unknown']]) await expect(cloudCommand('billing',args,deps)).rejects.toThrow('Usage');
+  expect(deps.fetch).not.toHaveBeenCalled();
 });
