@@ -1,5 +1,5 @@
 import { beforeEach, expect, it, vi } from 'vitest';
-import { LayaBackend, normalizeLayaEvaluation } from '@banh/laya';
+import { LayaBackend, normalizeLayaEvaluation, toLayaQuestions } from '@banh/laya';
 import { compileDecisions } from '@banh/dsl';
 import { makeProcess } from './helpers.js';
 
@@ -40,7 +40,7 @@ it('loads once, batches each execution, and closes once', async () => {
   await backend.evaluate('another ticket', questions);
   expect(sdk.load).toHaveBeenCalledExactlyOnceWith({ modelDir: '/local/model' });
   expect(sdk.systemOne).toHaveBeenCalledTimes(2);
-  expect(sdk.systemOne).toHaveBeenCalledWith('ticket', questions);
+  expect(sdk.systemOne).toHaveBeenCalledWith('ticket', toLayaQuestions(questions));
   await backend.close();
   await backend.close();
   expect(sdk.close).toHaveBeenCalledTimes(1);
@@ -67,4 +67,16 @@ it('wraps load, inference, and close failures with context', async () => {
   await expect(backend.evaluate({}, questions)).rejects.toThrow('Laya inference failed: session failed');
   sdk.close.mockRejectedValueOnce(new Error('release failed'));
   await expect(backend.close()).rejects.toThrow('Unable to close Laya: release failed');
+});
+
+it('translates Banh primitives to the SDK and HTTP protocol', () => {
+  expect(toLayaQuestions({
+    route: { type: 'one_of', question: 'Where?', options: { a: 'A', b: 'B' } },
+    urgent: { type: 'whether', question: 'Urgent?' },
+    severity: { type: 'scale', question: 'How bad?', levels: ['low', 'high'] },
+  })).toEqual({
+    route: { type: 'choice', instructions: 'Where?', criteria: { a: 'A', b: 'B' } },
+    urgent: { type: 'noul', instructions: 'Urgent?' },
+    severity: { type: 'score', instructions: 'How bad?', criteria: ['low', 'high'] },
+  });
 });

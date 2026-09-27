@@ -17,9 +17,15 @@ importers:
       '@banh/laya':
         specifier: workspace:*
         version: link:packages/laya
+      '@banh/providers':
+        specifier: workspace:*
+        version: link:packages/providers
       '@banh/runtime':
         specifier: workspace:*
         version: link:packages/runtime
+      '@banh/typesafe':
+        specifier: workspace:*
+        version: link:packages/typesafe
       '@receptron/laya':
         specifier: ^0.1.2
         version: 0.1.2
@@ -47,9 +53,9 @@ importers:
       '@banh/dsl':
         specifier: workspace:*
         version: link:../dsl
-      '@banh/laya':
+      '@banh/providers':
         specifier: workspace:*
-        version: link:../laya
+        version: link:../providers
       '@banh/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -71,18 +77,45 @@ importers:
       '@banh/runtime':
         specifier: workspace:*
         version: link:../runtime
+      '@banh/typesafe':
+        specifier: workspace:*
+        version: link:../typesafe
       '@receptron/laya':
         specifier: ^0.1.2
         version: 0.1.2
-      zod:
-        specifier: ^4.6.5
-        version: 4.6.5
+
+  packages/providers:
+    dependencies:
+      '@banh/dsl':
+        specifier: workspace:*
+        version: link:../dsl
+      '@banh/laya':
+        specifier: workspace:*
+        version: link:../laya
+      '@banh/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@banh/typesafe':
+        specifier: workspace:*
+        version: link:../typesafe
 
   packages/runtime:
     dependencies:
       '@banh/dsl':
         specifier: workspace:*
         version: link:../dsl
+      zod:
+        specifier: ^4.6.5
+        version: 4.6.5
+
+  packages/typesafe:
+    dependencies:
+      '@banh/dsl':
+        specifier: workspace:*
+        version: link:../dsl
+      '@banh/runtime':
+        specifier: workspace:*
+        version: link:../runtime
       zod:
         specifier: ^4.6.5
         version: 4.6.5

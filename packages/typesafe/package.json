@@ -1,5 +1,5 @@
 {
-  "name": "@banh/laya",
+  "name": "@banh/typesafe",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -16,8 +16,7 @@
   "dependencies": {
     "@banh/dsl": "workspace:*",
     "@banh/runtime": "workspace:*",
-    "@receptron/laya": "^0.1.2",
-    "@banh/typesafe": "workspace:*"
+    "zod": "^4.6.5"
   },
   "exports": {
     ".": {

@@ -18,7 +18,7 @@ it('emits JSON only on stdout and events on stderr, and closes the backend', asy
   expect(stdout).toHaveBeenCalledTimes(1);
   expect(JSON.parse(stdout.mock.calls[0]![0])).toMatchObject({ process: 'support_triage', output: { route: 'billing' } });
   expect(stderr).toHaveBeenCalledTimes(4);
-  expect(createBackend).toHaveBeenCalledWith({ modelDir: '/model' });
+  expect(createBackend).toHaveBeenCalledWith({ provider: 'native', model: 'laya', options: { modelDir: '/model' } });
   expect(backend.closed).toBe(true);
 });
 
@@ -62,4 +62,69 @@ it('supports text supplied directly or through a file', async () => {
     }
     expect(backend.calls.map(call => call.state)).toEqual(['raw ticket text', 'raw ticket text']);
   } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
+it('selects HTTP using flags over environment and keeps cloud credentials separate', async () => {
+  const createBackend = vi.fn().mockResolvedValue(fakeBackend());
+  await runCommand([workflow, '--input', input, '--provider', 'http', '--base-url', 'http://localhost:8000', '--timeout-ms', '1200'], {
+    createBackend, stdout: vi.fn(),
+    env: { BANH_PROVIDER: 'native', BANH_INFERENCE_BASE_URL: 'http://unused', BANH_INFERENCE_TOKEN: 'inference-secret', BANH_INFERENCE_TIMEOUT_MS: '999', BANH_API_TOKEN: 'cloud-secret' },
+  });
+  expect(createBackend).toHaveBeenCalledWith({ provider: 'http', model: 'laya', options: {
+    baseUrl: 'http://localhost:8000', token: 'inference-secret', timeoutMs: 1200,
+  } });
+});
+
+it('supports environment-only HTTP configuration without authentication', async () => {
+  const createBackend = vi.fn().mockResolvedValue(fakeBackend());
+  await runCommand([workflow, '--input', input], { createBackend, stdout: vi.fn(), env: {
+    BANH_PROVIDER: 'http', BANH_MODEL: 'laya', BANH_INFERENCE_BASE_URL: 'http://localhost:8000',
+  } });
+  expect(createBackend).toHaveBeenCalledWith({ provider: 'http', model: 'laya', options: { baseUrl: 'http://localhost:8000' } });
+});
+
+it.each([
+  ['--provider', 'other'], ['--model', 'kev'], ['--provider', 'http'],
+  ['--provider', 'http', '--base-url', 'http://localhost', '--model-dir', '/model'],
+  ['--provider', 'http', '--base-url', 'http://localhost', '--revision', 'main'],
+  ['--base-url', 'http://localhost'], ['--timeout-ms', '100'],
+])('rejects unsupported or conflicting provider settings %j', async (...flags) => {
+  const createBackend = vi.fn();
+  await expect(runCommand([workflow, '--input', input, ...flags], { createBackend, env: {} })).rejects.toThrow();
+  expect(createBackend).not.toHaveBeenCalled();
+});
+
+it.each(['kev', 'jev'])('selects %s over HTTP and forwards an explicit model ID', async model => {
+  const createBackend = vi.fn().mockResolvedValue(fakeBackend());
+  await runCommand([workflow, '--input', input, '--provider', 'http', '--model', model, '--model-id', 'pinned-version'], {
+    createBackend, stdout: vi.fn(), env: {
+      BANH_INFERENCE_BASE_URL: 'http://localhost:8008',
+      BANH_INFERENCE_TOKEN: 'secret', BANH_INFERENCE_MODEL_ID: 'ignored',
+    },
+  });
+  expect(createBackend).toHaveBeenCalledWith({
+    provider: 'http', model, options: { baseUrl: 'http://localhost:8008', token: 'secret', modelId: 'pinned-version' },
+  });
+});
+
+it('allows Jev to use its default endpoint and environment model ID', async () => {
+  const createBackend = vi.fn().mockResolvedValue(fakeBackend());
+  await runCommand([workflow, '--input', input], { createBackend, stdout: vi.fn(), env: {
+    BANH_PROVIDER: 'http', BANH_MODEL: 'jev', BANH_INFERENCE_TOKEN: 'secret', BANH_INFERENCE_MODEL_ID: 'jev-pinned',
+  } });
+  expect(createBackend).toHaveBeenCalledWith({
+    provider: 'http', model: 'jev', options: { token: 'secret', modelId: 'jev-pinned' },
+  });
+});
+
+it.each([
+  ['--model', 'jev'],
+  ['--model', 'unknown'],
+  ['--model-id', 'multilingual'],
+  ['--provider', 'http', '--model', 'kev'],
+  ['--provider', 'http', '--model', 'jev'],
+])('rejects invalid model/provider configuration %j', async (...flags) => {
+  const createBackend = vi.fn();
+  await expect(runCommand([workflow, '--input', input, ...flags], { createBackend, env: {} })).rejects.toThrow();
+  expect(createBackend).not.toHaveBeenCalled();
 });

@@ -6,18 +6,18 @@ it("compiles all decision primitives into one question map", () => {
   const { decisions } = makeProcess();
   expect(compileDecisions(decisions)).toEqual({
     department: {
-      type: "choice", instructions: decisions.department!.question,
-      criteria: { billing: "Payments, refunds, invoices", support: "Product problems and bugs", sales: "New purchases" },
+      type: "one_of", question: decisions.department!.question,
+      options: { billing: "Payments, refunds, invoices", support: "Product problems and bugs", sales: "New purchases" },
     },
-    urgent: { type: "noul", instructions: decisions.urgent!.question },
-    severity: { type: "score", instructions: decisions.severity!.question, criteria: ["negligible", "minor", "significant", "critical"] },
+    urgent: { type: "whether", question: decisions.urgent!.question },
+    severity: { type: "scale", question: decisions.severity!.question, levels: ["negligible", "minor", "significant", "critical"] },
   });
 });
 
 it("does not share mutable criteria with the input definition", () => {
   const process = makeProcess();
   const questions = compileDecisions(process.decisions);
-  if (questions.department!.type === "choice") questions.department!.criteria.billing = "Changed";
-  if (questions.severity!.type === "score") questions.severity!.criteria.push("Changed");
+  if (questions.department!.type === "one_of") questions.department!.options.billing = "Changed";
+  if (questions.severity!.type === "scale") questions.severity!.levels.push("Changed");
   expect(process).toEqual(makeProcess());
 });

@@ -1,3 +1,2 @@
-export * from './laya-backend.js';
 export * from './protocol.js';
 export * from './http-backend.js';

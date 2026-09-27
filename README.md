@@ -1,8 +1,7 @@
 # Banh
 
 A small TypeScript runtime and YAML language for bounded System One decisions,
-followed by deterministic flow rules. Laya evaluates all decisions in one model
-call; Banh returns the first matching rule's value. There are no agent loops
+followed by deterministic flow rules. A selected provider evaluates all decisions in one batch; Banh returns the first matching rule's value. There are no agent loops
 or arbitrary code execution.
 
 ## Getting started
@@ -32,7 +31,7 @@ pnpm's script banners:
 node packages/cli/dist/index.js run examples/support-triage.yaml --input examples/inputs/support-ticket.json --json
 ```
 
-Validation and the default tests never load a model. The first real execution
+Validation and the default tests never load a model. The first native execution
 downloads about 1.7 GB from Hugging Face, cached under `~/.cache/receptron-laya`
 (or `LAYA_CACHE`). Allow roughly 2–3 GB of RAM. Inference runs locally on CPU;
 Python and a separate model server are not required. The workspace explicitly allows the ONNX runtime and esbuild installation scripts.
@@ -41,6 +40,99 @@ Python and a separate model server are not required. The workspace explicitly al
 for the download cache, and `--revision <rev>` to pin a model revision. A local
 bundle includes `laya.onnx`, `laya.onnx.data`, `laya_config.json`,
 `tokenizer/tokenizer.json`, and `tokenizer/tokenizer_config.json`.
+
+## Inference providers
+
+Native Laya remains the default. Workflows and flow rules are independent of
+provider selection. Native execution supports Laya; HTTP execution supports
+Laya, Kev, and Jev through one TypeSafe-compatible adapter.
+
+To use an existing [Laya HTTP server](https://github.com/NandhaKishorM/laya/blob/main/laya/serve.py):
+
+```sh
+banh run examples/support-triage.yaml --input examples/inputs/support-ticket.json \
+  --provider http --model laya --base-url http://127.0.0.1:8000 --json
+```
+
+The HTTP adapter posts `{ state, questions }` to `/v1/systemone` and normalizes
+the returned `answers` and `usage.input_tokens`, using the same translation as
+native Laya. `--model` selects a model-family preset; `--model-id` supplies the
+exact wire-level `model` field. Different models/checkpoints can produce
+different predictions and confidence values.
+
+| Model preset | Provider | Default base URL | Default wire model | Bearer token |
+| --- | --- | --- | --- | --- |
+| `laya` | native or http | Required for HTTP | Omitted (server routing) | Optional |
+| `kev` | http | Required | `kev-latest` | Optional |
+| `jev` | http | `https://api.typesafe.ai` | `jev-latest` | Required |
+
+Kev support targets [Jared Palmer's Kev](https://github.com/jaredpalmer/kev).
+Jev uses the [official TypeSafe API](https://docs.typesafe.ai/api).
+The model preset configures the request; the server controls which weights
+actually execute. Providers retain their own request-size and option-count
+limits and return errors when these are exceeded.
+
+```sh
+# Self-hosted Kev
+banh run examples/support-triage.yaml --input examples/inputs/support-ticket.json \
+  --provider http --model kev --base-url http://127.0.0.1:8008
+
+# Hosted Jev; set BANH_INFERENCE_TOKEN to your TypeSafe API key first
+banh run examples/support-triage.yaml --input examples/inputs/support-ticket.json \
+  --provider http --model jev
+
+# Pin a Laya server checkpoint
+banh run examples/support-triage.yaml --input examples/inputs/support-ticket.json \
+  --provider http --model laya --base-url http://127.0.0.1:8000 --model-id multilingual
+```
+
+| Flag | Environment | Default |
+| --- | --- | --- |
+| `--provider` | `BANH_PROVIDER` | `native` |
+| `--model` | `BANH_MODEL` | `laya` |
+| `--base-url` | `BANH_INFERENCE_BASE_URL` | Model preset default (see above) |
+| `--model-id` | `BANH_INFERENCE_MODEL_ID` | Model preset default (see above) |
+| `--timeout-ms` | `BANH_INFERENCE_TIMEOUT_MS` | `60000` |
+| — | `BANH_INFERENCE_TOKEN` | No authentication; required for Jev |
+
+Flags override environment variables, which override preset defaults. Supply the bearer token through
+`BANH_INFERENCE_TOKEN`; it is separate from cloud login credentials and
+`BANH_API_TOKEN`. These settings apply to `run`, not cloud `invoke`.
+
+The base URL may include a reverse-proxy prefix or end in `/v1`. For example,
+`https://host/models/laya` and `https://host/models/laya/v1/` both target
+`https://host/models/laya/v1/systemone`. Query strings, fragments, and embedded
+credentials are rejected. HTTP and HTTPS are supported; requests do not follow
+redirects or retry. The timeout includes reading the response body. Closing the
+HTTP provider aborts active requests without shutting down the remote server.
+
+Native options `--model-dir`, `--cache-dir`, and `--revision` cannot be used
+with HTTP. `--model-id` is HTTP-only. HTTP execution never loads the native SDK or downloads weights,
+although this workspace still installs the native dependency. Standalone HTTP
+consumers can depend on `@banh/typesafe` and construct `TypeSafeHttpBackend`
+with `baseUrl`, optional `modelId`, `token`, and `timeoutMs`; that package
+has no native inference dependency.
+
+Library callers can select a provider explicitly:
+
+```ts
+import { createProvider } from "@banh/providers";
+import { ProcessRuntime } from "@banh/runtime";
+
+const backend = await createProvider({
+  provider: "http",
+  model: "laya",
+  options: { baseUrl: "http://127.0.0.1:8000", timeoutMs: 60_000 },
+});
+try {
+  const result = await new ProcessRuntime(backend).execute(definition, input);
+} finally {
+  await backend.close();
+}
+```
+
+Calling `createProvider()` selects native Laya. Existing direct
+`LayaBackend.create()` calls remain supported.
 
 ## Local cloud workflow (M3)
 
@@ -232,7 +324,9 @@ the packages when using watch mode after changing library code.
 
 - `packages/dsl` — `@banh/dsl`: YAML parsing, validation, expressions, and compilation.
 - `packages/runtime` — `@banh/runtime`: backend contract, execution, and normalized results.
-- `packages/laya` — `@banh/laya`: Laya loading and answer normalization.
+- `packages/laya` — `@banh/laya`: native Laya and compatibility exports.
+- `packages/typesafe` — `@banh/typesafe`: shared TypeSafe HTTP adapter and protocol translation.
+- `packages/providers` — `@banh/providers`: provider configuration and model selection.
 - `packages/cli` — `banh`: local commands and cloud login/logout/whoami/deploy.
 - `test` — deterministic tests and an opt-in real-model test.
 

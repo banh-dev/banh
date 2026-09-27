@@ -15,6 +15,11 @@ const help = `Usage:
 Options:
   --json              Emit machine-readable JSON on stdout
   --verbose           Emit execution events on stderr
+  --provider <name>   native (default) or http
+  --model <name>      laya (default), kev, or jev; native supports laya
+  --model-id <id>     Exact HTTP server model ID or checkpoint
+  --base-url <url>    TypeSafe-compatible HTTP server base URL
+  --timeout-ms <ms>   HTTP request timeout (default: 60000)
   --model-dir <dir>    Use an existing local ONNX model bundle
   --cache-dir <dir>    Set the model download cache
   --revision <rev>     Select a model repository revision
@@ -22,7 +27,10 @@ Options:
 Cloud commands default to http://127.0.0.1:3000 until a login is saved.
 Environment: BANH_API_URL, BANH_API_TOKEN, BANH_ACCOUNT_ID.
 
-Validation never loads a model. Run downloads model weights on first use.`;
+Inference environment: BANH_PROVIDER, BANH_MODEL, BANH_INFERENCE_BASE_URL,
+BANH_INFERENCE_TOKEN (required for Jev), BANH_INFERENCE_TIMEOUT_MS,
+BANH_INFERENCE_MODEL_ID.
+Validation never loads a model. Native run downloads model weights on first use.`;
 const args = process.argv.slice(2);
 try {
   if (args.length === 1 && (args[0] === '--help' || args[0] === '-h')) console.log(help);

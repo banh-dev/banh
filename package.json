@@ -24,7 +24,9 @@
     "@banh/laya": "workspace:*",
     "@receptron/laya": "^0.1.2",
     "yaml": "^2.9.1",
-    "zod": "^4.6.5"
+    "zod": "^4.6.5",
+    "@banh/providers": "workspace:*",
+    "@banh/typesafe": "workspace:*"
   },
   "pnpm": {
     "overrides": {

@@ -16,7 +16,7 @@
   "dependencies": {
     "@banh/dsl": "workspace:*",
     "@banh/runtime": "workspace:*",
-    "@banh/laya": "workspace:*"
+    "@banh/providers": "workspace:*"
   },
   "bin": {
     "banh": "./dist/index.js"
