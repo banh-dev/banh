@@ -1,8 +1,9 @@
 # Preparing the alpha
 
-Target version: `0.1.0-alpha.0`. Always publish this release with `--tag alpha`.
+Target version: `0.1.0-alpha.1`. Always publish this release with `--tag alpha`.
 On initial publication npm also assigned `latest`; removing it returned HTTP 400.
-Both tags currently resolve to this alpha. Continue documenting installation with
+`alpha` tracks the current prerelease; inspect `latest` separately rather than
+assuming it advances when publishing with `--tag alpha`. Continue documenting installation with
 `@alpha` and verify registry tags after each release. See
 [npm/cli #8490](https://github.com/npm/cli/issues/8490) for the matching registry behavior.
 The workspace root stays private; the six packages carry MIT licenses and public
@@ -51,7 +52,7 @@ on the unconverted workspace source.
    dependency order: dsl, runtime, typesafe, laya, providers, then CLI.
 5. Verify installation from the registry in another empty directory and check
    `banh --version`, `banh validate`, and a local workflow.
-6. Tag the verified commit `v0.1.0-alpha.0` and publish matching release notes.
+6. Tag the verified commit `v0.1.0-alpha.1` and publish matching release notes.
 
 Publishing is a separate action requiring an explicit release decision. This
 preparation does not reserve names, upload packages, push commits, or create tags.

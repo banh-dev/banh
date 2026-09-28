@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.0-alpha.1 — 2026-09-28
+
+- Support versioned Jev model IDs and `jev-preview` in workflow YAML; explicit
+  CLI/environment model IDs still override workflow selections.
+- Create, list and revoke account invocation keys with `banh keys`.
+- Cancel renewal with `banh billing cancel`, including when a Cloud downgrade
+  is scheduled, while preserving access through the current paid period.
+- Explain hosted input limits, unpaid subscriptions, quota limits and temporary
+  inference cooldowns through CLI errors.
+- Document Banh Cloud as an early release with managed Jev, current plans and
+  invitation-based access. OSS provider selection remains independent of Cloud.
+
+
 ## 0.1.0-alpha.0 — 2026-09-28
 
 - YAML workflows with bounded `one_of`, `whether`, and `scale` decisions followed

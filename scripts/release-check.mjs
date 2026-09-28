@@ -15,6 +15,8 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const temp = await mkdtemp(join(tmpdir(), 'banh-alpha-'));
 const destination = process.argv.slice(2).find(arg => arg !== '--');
 const artifacts = destination ? resolve(destination) : join(temp, 'artifacts');
+const releaseVersion = JSON.parse(await readFile(join(root, 'packages/cli/package.json'), 'utf8')).version;
+assert.match(releaseVersion, /^\d+\.\d+\.\d+-alpha\.\d+$/);
 const packages = ['dsl', 'runtime', 'typesafe', 'laya', 'providers', 'cli'];
 let server;
 async function run(command, args, cwd) {
@@ -31,7 +33,7 @@ try {
   for (const name of packages) {
     const dir = join(root, 'packages', name);
     const manifest = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'));
-    assert.equal(manifest.version, '0.1.0-alpha.0');
+    assert.equal(manifest.version, releaseVersion);
     assert.equal(manifest.license, 'MIT');
     assert.equal(manifest.publishConfig.tag, 'alpha');
     assert.notEqual(manifest.private, true);
@@ -45,12 +47,12 @@ try {
   for (const name of packages.map(p => '@banh-dev/' + p)) {
     const dir = join(consumer, 'node_modules', name);
     const manifest = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'));
-    assert.equal(manifest.version, '0.1.0-alpha.0');
+    assert.equal(manifest.version, releaseVersion);
     assert.ok((await readFile(join(dir, 'LICENSE'), 'utf8')).startsWith('MIT License'));
     assert.ok((await readFile(join(dir, 'README.md'), 'utf8')).length);
     for (const [dependency, version] of Object.entries(manifest.dependencies ?? {})) {
       assert.ok(!version.startsWith('workspace:'));
-      if (dependency.startsWith('@banh-dev/')) assert.equal(version, '0.1.0-alpha.0');
+      if (dependency.startsWith('@banh-dev/')) assert.equal(version, releaseVersion);
     }
   }
   await run('node', ['--input-type=module', '-e',
@@ -58,7 +60,9 @@ try {
   const cli = join(consumer, 'node_modules', '.bin', 'banh');
   const help = await run(cli, ['--help'], consumer);
   assert.match(help.stdout, /https:\/\/api.banh.dev/);
-  assert.equal((await run(cli, ['--version'], consumer)).stdout.trim(), '0.1.0-alpha.0');
+  assert.match(help.stdout, /banh keys/);
+  assert.match(help.stdout, /portal \| cancel/);
+  assert.equal((await run(cli, ['--version'], consumer)).stdout.trim(), releaseVersion);
   const workflow = join(consumer, 'smoke.yaml');
   await writeFile(workflow, 'version: 1\nprocess: smoke\ninput:\n  type: text\ndecisions:\n  urgent:\n    decide: whether\n    question: Urgent?\nflow:\n  - else:\n      do: return\n      value: "{{ urgent.value }}"\n');
   await run(cli, ['validate', workflow], consumer);

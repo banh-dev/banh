@@ -1,6 +1,6 @@
 # Banh
 
-Alpha release: **0.1.0-alpha.0**. The CLI package is `@banh-dev/cli`;
+Alpha release: **0.1.0-alpha.1**. The CLI package is `@banh-dev/cli`;
 libraries use the `@banh-dev` scope. The executable remains `banh`.
 Install the alpha CLI with:
 
@@ -11,8 +11,9 @@ banh --version
 
 APIs and workflow syntax may change during alpha. Native Laya has been tested
 with real inference on Linux. Real Kev-4B HTTP inference has also been verified.
-HTTP Laya/Jev have fixture-based
-coverage; their live endpoints and native macOS/Windows inference remain unverified.
+Jev HTTP inference and hosted Cloud workflows have been verified in production.
+HTTP Laya has fixture-based coverage; its live endpoint and native macOS/Windows
+inference remain unverified.
 
 A small TypeScript runtime and YAML language for bounded System One decisions,
 followed by deterministic flow rules. A selected provider evaluates all decisions in one batch; Banh returns the first matching rule's value. There are no agent loops
@@ -174,7 +175,16 @@ Calling `createProvider()` selects native Laya. Existing direct
 
 ## Banh Cloud
 
-Banh Cloud is in development.
+[Banh Cloud](https://docs.banh.dev/getting-started/cloud/) is an **early release**
+with managed Jev inference. Access is currently by invitation. Once admitted,
+use `banh login`, `banh deploy <workflow.yaml>`, and `banh invoke <workflow>`.
+Cloud commands default to `https://api.banh.dev`; no separate model API key is needed.
+
+Starter is USD **$4.99/month** for **2,000 completed runs**; Pro is USD
+**$19.99/month** for **10,000**. Both have an approximate **8,000-token** budget
+per request, including decision questions and options. Failed runs do not consume
+allowance. See the [Cloud guide](https://docs.banh.dev/getting-started/cloud/)
+for access, billing, limits, and automation credentials.
 
 Account billing owners can use `banh billing status` to view allowance and period
 boundaries, and `banh billing cancel` to stop renewal at the end of the current

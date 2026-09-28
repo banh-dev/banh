@@ -1,6 +1,6 @@
 # Banh
 
-Alpha release: **0.1.0-alpha.0**. The CLI package is `@banh-dev/cli`;
+Alpha release: **0.1.0-alpha.1**. The CLI package is `@banh-dev/cli`;
 libraries use the `@banh-dev` scope. The executable remains `banh`.
 Install the alpha CLI with:
 
@@ -10,8 +10,10 @@ banh --version
 ```
 
 APIs and workflow syntax may change during alpha. Native Laya has been tested
-with real inference on Linux. HTTP Laya/Kev/Jev support is experimental and has
-fixture-based coverage; live HTTP inference and macOS/Windows are not yet verified.
+with real inference on Linux. Real Kev-4B HTTP inference has also been verified.
+Jev HTTP inference and hosted Cloud workflows have been verified in production.
+HTTP Laya has fixture-based coverage; its live endpoint and native macOS/Windows
+inference remain unverified.
 
 A small TypeScript runtime and YAML language for bounded System One decisions,
 followed by deterministic flow rules. A selected provider evaluates all decisions in one batch; Banh returns the first matching rule's value. There are no agent loops
@@ -59,8 +61,24 @@ bundle includes `laya.onnx`, `laya.onnx.data`, `laya_config.json`,
 ## Inference providers
 
 Native Laya remains the default. Workflows and flow rules are independent of
-provider selection. Native execution supports Laya; HTTP execution supports
+provider transport. Native execution supports Laya; HTTP execution supports
 Laya, Kev, and Jev through one TypeSafe-compatible adapter.
+
+A workflow can optionally select a logical model:
+
+```yaml
+model:
+  provider: kev
+  model: kev-4b
+```
+
+This uses the HTTP Kev preset for local `banh run`; configure its server with
+`BANH_INFERENCE_BASE_URL` and optionally `BANH_INFERENCE_TOKEN`. Logical selections
+currently supported by the CLI are `laya/laya`, `kev/kev-4b`, and `jev/jev-latest`. Jev also accepts `jev/jev-preview` and versioned IDs such as
+`jev/jev-1.13.0`, which are forwarded to the HTTP API.
+Explicit CLI flags and `BANH_PROVIDER`/`BANH_MODEL` take precedence for local testing.
+An omitted selection preserves the native Laya default. Transport, endpoint, and credentials
+stay outside the workflow. No automatic model fallback occurs.
 
 To use an existing [Laya HTTP server](https://github.com/NandhaKishorM/laya/blob/main/laya/serve.py):
 
@@ -81,14 +99,12 @@ different predictions and confidence values.
 | `kev` | http | Required | `kev-latest` | Optional |
 | `jev` | http | `https://api.typesafe.ai` | `jev-latest` | Required |
 
+Selecting `--model jev` or `--model kev` defaults to HTTP; `--provider` can
+override transport explicitly. OSS defaults remain native Laya when no model is selected.
+Cloud owns its default and model allowlist independently.
+
 Kev support targets [Jared Palmer's Kev](https://github.com/jaredpalmer/kev).
 Jev uses the [official TypeSafe API](https://docs.typesafe.ai/api).
-`--model jev` automatically selects HTTP unless a provider is explicitly configured.
-Set `BANH_INFERENCE_TOKEN` for local inference; Cloud login credentials are separate.
-YAML can select `model: { provider: jev, model: jev-1.13.0 }` to pin a version,
-or use `jev-latest`/`jev-preview`. `--model-id` overrides the wire model explicitly.
-See `examples/jev-support-triage.yaml`. Cloud selects its default independently;
-OSS does not require Cloud or a particular inference service.
 The model preset configures the request; the server controls which weights
 actually execute. Providers retain their own request-size and option-count
 limits and return errors when these are exceeded.
@@ -117,14 +133,16 @@ banh run examples/support-triage.yaml --input examples/inputs/support-ticket.jso
 | — | `BANH_INFERENCE_TOKEN` | No authentication; required for Jev |
 
 Flags override environment variables, which override preset defaults. Supply the bearer token through
-`BANH_INFERENCE_TOKEN`; it is separate from cloud login credentials and
-`BANH_API_TOKEN`. These settings apply to `run`, not cloud `invoke`.
+`BANH_INFERENCE_TOKEN`. These settings apply to `banh run`.
 
 The base URL may include a reverse-proxy prefix or end in `/v1`. For example,
 `https://host/models/laya` and `https://host/models/laya/v1/` both target
 `https://host/models/laya/v1/systemone`. Query strings, fragments, and embedded
 credentials are rejected. HTTP and HTTPS are supported; requests do not follow
-redirects or retry. The timeout includes reading the response body. Closing the
+redirects. Retries are off by default; library callers can set `maxAttempts: 2`
+for connection failures and 502/503/504 responses. One total timeout covers both
+attempts, backoff, and response reading. Per-run `AbortSignal` cancellation is
+supported by HTTP execution. Closing the
 HTTP provider aborts active requests without shutting down the remote server.
 
 Native options `--model-dir`, `--cache-dir`, and `--revision` cannot be used
@@ -155,49 +173,24 @@ try {
 Calling `createProvider()` selects native Laya. Existing direct
 `LayaBackend.create()` calls remain supported.
 
-## Optional Bánh Cloud commands
+## Banh Cloud
 
-Local validation and inference do not require a cloud account. Cloud commands
-default to `https://api.banh.dev`. The hosted service is currently an invitation-only
-private pilot with sandbox billing; installing this CLI does not grant access.
+[Banh Cloud](https://docs.banh.dev/getting-started/cloud/) is an **early release**
+with managed Jev inference. Access is currently by invitation. Once admitted,
+use `banh login`, `banh deploy <workflow.yaml>`, and `banh invoke <workflow>`.
+Cloud commands default to `https://api.banh.dev`; no separate model API key is needed.
 
-```sh
-banh login
-banh whoami
-banh deploy examples/warranty-claim.yaml
-banh invoke warranty_triage --input examples/inputs/warranty-claim.json --json
-banh runs warranty_triage --limit 10
-banh inspect run_YOUR_RUN_ID --json
-banh logout
-```
+Starter is USD **$4.99/month** for **2,000 completed runs**; Pro is USD
+**$19.99/month** for **10,000**. Both have an approximate **8,000-token** budget
+per request, including decision questions and options. Failed runs do not consume
+allowance. See the [Cloud guide](https://docs.banh.dev/getting-started/cloud/)
+for access, billing, limits, and automation credentials.
 
-Login uses Auth0 device authorization: follow the displayed verification URL and
-code. `--no-browser` suppresses opening a browser. No client secret is needed.
-Saved access tokens expire; repeat login when prompted. Logout removes local
-credentials but does not revoke tokens or end your browser session.
-
-Cloud commands accept `--api-url` (except logout). Configuration precedence is
-flag, `BANH_API_URL`, saved URL, then `https://api.banh.dev`. Use
-`--api-url http://127.0.0.1:3000` for a local cloud server. Remote URLs require HTTPS.
-Saved tokens are bound to their API origin and are never forwarded to another
-origin. `BANH_API_TOKEN` overrides saved credentials; `BANH_ACCOUNT_ID` selects
-an account. Invocation keys require an explicit account and cannot access history.
-
-Credentials are stored as plaintext in a private file, with owner-only permissions
-on Unix: `$XDG_CONFIG_HOME/banh/config.json` (or `~/.config/banh/config.json`) on
-Linux, `~/Library/Application Support/banh/config.json` on macOS, and
-`%APPDATA%/banh/config.json` on Windows. `BANH_CONFIG_DIR` selects an isolated profile.
-
-Pilot billing commands are `banh billing status`, `checkout starter`, `checkout pro`,
-`plan starter`, `plan pro`, and `portal`. Checkout and Portal print a Stripe URL.
-Cloud invocation requires an active pilot subscription; local execution does not.
-Cloud inference currently uses operator-managed Laya and accepts no customer model
-or inference-endpoint overrides.
-
-`--json` emits structured results. Failed invocations print the persisted run and
-exit nonzero; inspecting a failed historical run succeeds. `runs` accepts
-`--limit` (1–100, default 50) and `--offset` (0–10000, default 0). Validation and
-local input checks happen before deployment or model loading.
+Account billing owners can use `banh billing status` to view allowance and period
+boundaries, and `banh billing cancel` to stop renewal at the end of the current
+paid period. Cancellation also works with a scheduled downgrade; paid access
+continues until the displayed end date. Repeating the command is safe.
+Use `--json` for machine-readable billing status.
 
 ## Workflow syntax
 
@@ -321,7 +314,7 @@ the packages when using watch mode after changing library code.
 - `packages/laya` — `@banh-dev/laya`: native Laya and compatibility exports.
 - `packages/typesafe` — `@banh-dev/typesafe`: shared TypeSafe HTTP adapter and protocol translation.
 - `packages/providers` — `@banh-dev/providers`: provider configuration and model selection.
-- `packages/cli` — `@banh-dev/cli`: local commands and cloud login/logout/whoami/deploy.
+- `packages/cli` — `@banh-dev/cli`: workflow validation and local execution.
 - `test` — deterministic tests and an opt-in real-model test.
 
 ## Alpha release and licensing
@@ -331,10 +324,5 @@ own licenses; model weights are downloaded separately and are not included in np
 artifacts. Native inference dependencies are installed with the CLI even when you
 only use HTTP. HTTP-only library users can install `@banh-dev/typesafe` from npm.
 
-See [release preparation](https://github.com/banh-dev/banh/blob/main/RELEASING.md) and [changes](https://github.com/banh-dev/banh/blob/main/CHANGELOG.md). Release
+See [release preparation](RELEASING.md) and [changes](CHANGELOG.md). Release
 artifacts must pass a clean npm installation test outside the workspace.
-
-Account owners can create automation credentials with `banh keys create`, inspect
-metadata with `banh keys list`, and revoke them with `banh keys revoke <key-id>`.
-The secret is shown only on creation. Store it securely and set `BANH_API_TOKEN`
-and `BANH_ACCOUNT_ID` when invoking from automation.
