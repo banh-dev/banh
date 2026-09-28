@@ -53,10 +53,14 @@ export async function runCommand(args: string[], dependencies: RunDependencies =
   const stdout = dependencies.stdout ?? console.log;
   const stderr = dependencies.stderr ?? console.error;
   const env = dependencies.env ?? process.env;
-  const provider = values.provider ?? env.BANH_PROVIDER ?? 'native';
-  const model = values.model ?? env.BANH_MODEL ?? 'laya';
+  const provider = values.provider ?? env.BANH_PROVIDER ?? (definition.model && definition.model.provider !== 'laya' ? 'http' : 'native');
+  const model = values.model ?? env.BANH_MODEL ?? definition.model?.provider ?? 'laya';
   if (model !== 'laya' && model !== 'kev' && model !== 'jev') throw new RuntimeError('Unsupported model; use laya, kev, or jev');
   if (provider !== 'native' && provider !== 'http') throw new RuntimeError('Unsupported provider; use native or http');
+  if (definition.model && !values.model && !env.BANH_MODEL) {
+    const supported = { laya: 'laya', kev: 'kev-4b', jev: 'jev-latest' };
+    if (definition.model.model !== supported[model]) throw new RuntimeError('Unsupported logical model for local execution');
+  }
   let config: ProviderOptions;
   if (provider === 'http') {
     if (values['model-dir'] !== undefined || values['cache-dir'] !== undefined || values.revision !== undefined) {

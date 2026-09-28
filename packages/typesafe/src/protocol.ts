@@ -31,7 +31,7 @@ const answerSchema = z.discriminatedUnion('type', [
 ]);
 const responseSchema = z.object({
   answers: z.record(z.string(), z.unknown()),
-  usage: z.object({ input_tokens: z.number().int().nonnegative() }),
+  usage: z.object({ input_tokens: z.number().int().nonnegative(), output_tokens: z.number().int().nonnegative().optional() }),
 });
 
 // Wire probabilities are commonly rounded to four decimal places.
@@ -76,6 +76,6 @@ export function normalizeTypeSafeEvaluation(response: unknown, questions: Record
     }
     throw new BackendError(`Unexpected TypeSafe answer for "${id}"`);
   }));
-  return { decisions, usage: { inputTokens: parsed.data.usage.input_tokens } };
+  return { decisions, usage: { inputTokens: parsed.data.usage.input_tokens, ...(parsed.data.usage.output_tokens === undefined ? {} : { outputTokens: parsed.data.usage.output_tokens }) } };
 }
 

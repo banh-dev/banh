@@ -29,7 +29,7 @@ it('normalizes all answer types without rounding or fabricating confidence', () 
   expect(result.decisions.urgent).toEqual({ id: 'urgent', kind: 'whether', value: true, probability: 0.5, raw: raw.answers.urgent });
   expect(result.decisions.severity).toMatchObject({ kind: 'scale', value: 2.6, probabilities: raw.answers.severity.probabilities });
   expect(result.decisions.department!.raw).toBe(raw.answers.department);
-  expect(result.usage).toEqual({ inputTokens: 267 });
+  expect(result.usage).toEqual({ inputTokens: 267, outputTokens: 0 });
   raw.answers.urgent.noul = 0.499;
   expect(normalizeLayaEvaluation(raw, questions).decisions.urgent!.value).toBe(false);
 });

@@ -72,7 +72,9 @@ it('matches native normalization and omits authorization when no token is suppli
   sdk.load.mockResolvedValue({ systemOne: async () => answer, close: async () => {} });
   const native = await LayaBackend.create();
   const http = new TypeSafeHttpBackend({ baseUrl });
-  expect(await http.evaluate('ticket', questions)).toEqual(await native.evaluate('ticket', questions));
+  const { diagnostics, ...normalized } = await http.evaluate('ticket', questions);
+  expect(normalized).toEqual(await native.evaluate('ticket', questions));
+  expect(diagnostics).toMatchObject({ attemptCount: 1, responseStatus: 200 });
   await native.close();
   await http.close();
 });
@@ -85,7 +87,7 @@ it.each([401, 422, 500, 503, 307])('reports status %i without retrying, redirect
     res.end('private input or token');
   });
   const http = new TypeSafeHttpBackend({ baseUrl });
-  await expect(http.evaluate({}, questions)).rejects.toThrow('TypeSafe HTTP request failed (status ' + status + ')');
+  await expect(http.evaluate({}, questions)).rejects.toMatchObject({ diagnostics: { attemptCount: 1, responseStatus: status }, message: expect.not.stringContaining('private') });
   expect(calls).toBe(1);
 });
 
@@ -104,7 +106,7 @@ it('closing aborts an in-flight request', async () => {
   const arrival = new Promise<void>(resolve => { received = resolve; });
   const baseUrl = await server(() => received());
   const http = new TypeSafeHttpBackend({ baseUrl });
-  const pending = expect(http.evaluate({}, questions)).rejects.toThrow('closed');
+  const pending = expect(http.evaluate({}, questions)).rejects.toMatchObject({ code: 'PROVIDER_CANCELLED' });
   await arrival;
   await http.close();
   await pending;
@@ -113,7 +115,7 @@ it('closing aborts an in-flight request', async () => {
 it('reports connection failures', async () => {
   const baseUrl = await server(() => {});
   await cleanup.pop()!();
-  await expect(new TypeSafeHttpBackend({ baseUrl }).evaluate({}, questions)).rejects.toThrow('TypeSafe HTTP request failed');
+  await expect(new TypeSafeHttpBackend({ baseUrl }).evaluate({}, questions)).rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE' });
 });
 
 it.each(['file:///tmp/model', 'bad', 'http://user:secret@localhost', 'http://localhost?x=1', 'http://localhost/#x'])('rejects invalid base URL %s', baseUrl => {
@@ -210,4 +212,59 @@ it('requires an explicit server for self-hosted models and a token for Jev', asy
 
 it.each(['', '   ', 'bad\nmodel'])('rejects invalid wire model IDs', async modelId => {
   await expect(createProvider({ provider: 'http', model: 'kev', options: { baseUrl: 'http://localhost', modelId } })).rejects.toThrow('model ID');
+});
+
+it.each([502, 503, 504])('retries transient %i once and returns attempt diagnostics', async status => {
+  let calls = 0;
+  const baseUrl = await server((_req, res) => {
+    if (++calls === 1) { res.writeHead(status); res.end('private'); }
+    else res.end(JSON.stringify(answer));
+  });
+  const result = await new TypeSafeHttpBackend({ baseUrl, maxAttempts: 2, retryDelayMs: 1 }).evaluate({}, questions);
+  expect(calls).toBe(2);
+  expect(result.diagnostics).toMatchObject({ attemptCount: 2, responseStatus: 200 });
+  expect(result.diagnostics!.requestBytes).toBeGreaterThan(0);
+});
+
+it.each([
+  [400, 'PROVIDER_BAD_REQUEST'], [401, 'PROVIDER_UNAUTHORIZED'], [403, 'PROVIDER_UNAUTHORIZED'],
+  [404, 'PROVIDER_BAD_REQUEST'], [429, 'PROVIDER_UNAVAILABLE'], [500, 'PROVIDER_INTERNAL_ERROR'],
+])('does not retry %i and exposes only safe diagnostics', async (status, code) => {
+  let calls = 0;
+  const baseUrl = await server((_req, res) => { calls++; res.writeHead(status as number); res.end('secret-token customer-input'); });
+  const error = await new TypeSafeHttpBackend({ baseUrl, token: 'secret-token', maxAttempts: 2 }).evaluate('customer-input', questions).catch(error => error);
+  expect(error).toMatchObject({ code, diagnostics: { attemptCount: 1, responseStatus: status } });
+  expect(`${error}${JSON.stringify(error)}`).not.toMatch(/secret-token|customer-input|127\.0\.0\.1/);
+  expect(calls).toBe(1);
+});
+
+it('bounds retries and backoff by one total deadline', async () => {
+  let calls = 0;
+  const baseUrl = await server((_req, res) => { calls++; res.writeHead(503); res.end(); });
+  await expect(new TypeSafeHttpBackend({ baseUrl, maxAttempts: 2, retryDelayMs: 100, timeoutMs: 30 }).evaluate({}, questions))
+    .rejects.toMatchObject({ code: 'PROVIDER_TIMEOUT', diagnostics: { attemptCount: 1 } });
+  expect(calls).toBe(1);
+});
+
+it('cancels one run without closing the shared backend', async () => {
+  let received!: () => void;
+  const arrived = new Promise<void>(resolve => { received = resolve; });
+  let calls = 0;
+  const baseUrl = await server((_req, res) => { if (++calls === 1) received(); else res.end(JSON.stringify(answer)); });
+  const backend = new TypeSafeHttpBackend({ baseUrl, maxAttempts: 2 });
+  const controller = new AbortController();
+  const first = expect(backend.evaluate({}, questions, { signal: controller.signal })).rejects.toMatchObject({ code: 'PROVIDER_CANCELLED' });
+  await arrived;
+  controller.abort();
+  await first;
+  await expect(backend.evaluate({}, questions)).resolves.toMatchObject({ diagnostics: { attemptCount: 1 } });
+  await backend.close();
+});
+
+it('retries connection resets but stops after two attempts', async () => {
+  let calls = 0;
+  const baseUrl = await server(req => { calls++; req.socket.destroy(); });
+  await expect(new TypeSafeHttpBackend({ baseUrl, maxAttempts: 2, retryDelayMs: 1 }).evaluate({}, questions))
+    .rejects.toMatchObject({ code: 'PROVIDER_UNAVAILABLE', diagnostics: { attemptCount: 2 } });
+  expect(calls).toBe(2);
 });

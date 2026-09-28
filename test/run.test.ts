@@ -128,3 +128,19 @@ it.each([
   await expect(runCommand([workflow, '--input', input, ...flags], { createBackend, env: {} })).rejects.toThrow();
   expect(createBackend).not.toHaveBeenCalled();
 });
+
+it('resolves a workflow logical model locally and permits explicit family overrides', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'banh-model-'));
+  const path = join(dir, 'kev.yaml');
+  const createBackend = vi.fn(async () => fakeBackend());
+  try {
+    await writeFile(path, supportYaml + '\nmodel: { provider: kev, model: kev-4b }\n');
+    await runCommand([path, '--input', input], { createBackend, stdout: vi.fn(), env: { BANH_INFERENCE_BASE_URL: 'http://localhost:8009' } });
+    expect(createBackend).toHaveBeenLastCalledWith({ provider: 'http', model: 'kev', options: { baseUrl: 'http://localhost:8009' } });
+    await runCommand([path, '--input', input, '--provider', 'native', '--model', 'laya'], { createBackend, stdout: vi.fn(), env: {} });
+    expect(createBackend).toHaveBeenLastCalledWith({ provider: 'native', model: 'laya', options: {} });
+    await writeFile(path, supportYaml + '\nmodel: { provider: kev, model: kev-9b }\n');
+    await expect(runCommand([path, '--input', input], { createBackend, env: {} })).rejects.toThrow('Unsupported logical model');
+    expect(createBackend).toHaveBeenCalledTimes(2);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});

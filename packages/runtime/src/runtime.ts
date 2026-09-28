@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { compileProcess } from '@banh/dsl';
 import { BackendError, RuntimeError } from '@banh/dsl';
-import type { SystemOneBackend } from './system-one-backend.js';
+import type { SystemOneBackend, ProviderExecutionOptions } from './system-one-backend.js';
 import type { ProcessExecutionResult } from './result.js';
 import { evaluateExpression } from './evaluator.js';
 import { interpolateValue } from './interpolation.js';
@@ -36,7 +36,7 @@ export function validateInput(input: unknown, type?: 'json' | 'text'): void {
 export class ProcessRuntime {
   constructor(private readonly backend: SystemOneBackend, private readonly options: { onEvent?: (event: RuntimeEvent) => void } = {}) {}
 
-  async execute(source: unknown, input: unknown): Promise<ProcessExecutionResult> {
+  async execute(source: unknown, input: unknown, executionOptions: ProviderExecutionOptions = {}): Promise<ProcessExecutionResult> {
     const start = performance.now();
     const plan = compileProcess(source);
     validateInput(input, plan.definition.input?.type);
@@ -44,7 +44,7 @@ export class ProcessRuntime {
     const inferenceStart = performance.now();
     let evaluation;
     try {
-      evaluation = await this.backend.evaluate(input, plan.questions);
+      evaluation = await this.backend.evaluate(input, plan.questions, executionOptions);
     } catch (cause) {
       if (cause instanceof BackendError) throw cause;
       throw new BackendError(`Inference failed: ${cause instanceof Error ? cause.message : String(cause)}`, { cause });
@@ -77,6 +77,7 @@ export class ProcessRuntime {
         return {
           process: plan.definition.process, output, decisions: evaluation.decisions,
           ...(evaluation.usage ? { usage: evaluation.usage } : {}),
+          ...(evaluation.diagnostics ? { diagnostics: evaluation.diagnostics } : {}),
           timing: { totalMs: performance.now() - start, inferenceMs },
         };
       }

@@ -50,7 +50,7 @@ export class CloudClient {
       throw new Error(`Unable to reach Banh Cloud at ${this.connection.apiUrl}. For local development, run make up in banh-cloud.`);
     }
     // Do not echo arbitrary response bodies: they may contain secrets or stack traces.
-    if (!response.ok && !(runRequest && [500, 503, 504].includes(response.status))) {
+    if (!response.ok && !(runRequest && [500, 502, 503, 504].includes(response.status))) {
       await response.body?.cancel();
       if (response.status === 401) throw new Error('Authentication failed. Run banh login to obtain a valid Auth0 access token.');
       if (response.status === 403) throw new Error('Access denied. Check that your Auth0 identity is linked to the selected Banh account.');

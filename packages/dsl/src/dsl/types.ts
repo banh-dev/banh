@@ -20,9 +20,12 @@ export interface ReturnAction {
 export type FlowStep = (ReturnAction & { when: string }) | { else: ReturnAction };
 
 /** A validated process definition; input defaults are left to the runtime. */
+export interface ModelSelection { provider: string; model: string }
+
 export interface ProcessFile {
   version: 1;
   process: string;
+  model?: ModelSelection | undefined;
   input?: InputDefinition;
   decisions: Record<string, DecisionDefinition>;
   flow: FlowStep[];

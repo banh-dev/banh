@@ -1,3 +1,4 @@
+import type { ProviderDiagnostics } from './system-one-backend.js';
 /** Normalized model answer. Optional metadata may be absent from a backend. */
 export interface DecisionResult {
   id: string;
@@ -16,6 +17,7 @@ export interface ProcessExecutionResult {
   process: string;
   output: unknown;
   decisions: Record<string, DecisionResult>;
-  usage?: { inputTokens?: number };
+  usage?: { inputTokens?: number; outputTokens?: number };
+  diagnostics?: ProviderDiagnostics;
   timing: { totalMs: number; inferenceMs?: number };
 }

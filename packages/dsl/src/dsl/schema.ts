@@ -29,6 +29,10 @@ const flowStepSchema = z.union([
 export const processSchema = z.strictObject({
   version: z.literal(1),
   process: nonEmptyString,
+  model: z.strictObject({
+    provider: z.string().regex(/^[a-z][a-z0-9-]{0,63}$/),
+    model: z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/),
+  }).optional(),
   input: z.strictObject({ type: z.enum(["json", "text"]) }).optional(),
   decisions: z.record(identifier, decisionSchema).refine(value => Object.keys(value).length > 0, "At least one decision is required"),
   flow: z.array(flowStepSchema).min(1),

@@ -8,6 +8,10 @@
   Laya, Kev, and Jev. Configurable model IDs, endpoints, authentication, and timeouts.
 - Local validate/run commands and optional cloud login, deployment, invocation,
   billing, and run-history commands. Cloud defaults to `https://api.banh.dev`.
+- Optional logical provider/model selection in workflow YAML, resolved by the CLI
+  or the Cloud managed-model allowlist.
+- HTTP cancellation, bounded opt-in retries, structured provider errors, request
+  diagnostics, and input/output token usage.
 - MIT licensing and six independently packed packages.
 - Validate complete probability distributions with a tolerance for rounding;
   reject malformed cloud invocation results.
@@ -15,4 +19,6 @@
 
 Alpha APIs and workflow syntax may change. Cloud remains an invitation-only pilot.
 Native inference cannot be forcibly cancelled through the backend interface.
-Live HTTP model integration and non-Linux platforms have not yet been verified.
+Real Kev-4B HTTP inference has been verified, including hosted execution and
+a cached cold start. Real HTTP Laya/Jev endpoints and non-Linux native platforms
+have not yet been verified.

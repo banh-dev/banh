@@ -6,8 +6,9 @@ assume a package currently on npm with either name is this project.
 Use the source installation below until publication is announced.
 
 APIs and workflow syntax may change during alpha. Native Laya has been tested
-with real inference on Linux. HTTP Laya/Kev/Jev support is experimental and has
-fixture-based coverage; live HTTP inference and macOS/Windows are not yet verified.
+with real inference on Linux. Real Kev-4B HTTP inference has also been verified,
+including hosted execution and a cached cold start. HTTP Laya/Jev have fixture-based
+coverage; their live endpoints and native macOS/Windows inference remain unverified.
 
 A small TypeScript runtime and YAML language for bounded System One decisions,
 followed by deterministic flow rules. A selected provider evaluates all decisions in one batch; Banh returns the first matching rule's value. There are no agent loops
@@ -55,8 +56,24 @@ bundle includes `laya.onnx`, `laya.onnx.data`, `laya_config.json`,
 ## Inference providers
 
 Native Laya remains the default. Workflows and flow rules are independent of
-provider selection. Native execution supports Laya; HTTP execution supports
+provider transport. Native execution supports Laya; HTTP execution supports
 Laya, Kev, and Jev through one TypeSafe-compatible adapter.
+
+A workflow can optionally select a logical model:
+
+```yaml
+model:
+  provider: kev
+  model: kev-4b
+```
+
+This uses the HTTP Kev preset for local `banh run`; configure its server with
+`BANH_INFERENCE_BASE_URL` and optionally `BANH_INFERENCE_TOKEN`. Logical selections
+currently supported by the CLI are `laya/laya`, `kev/kev-4b`, and `jev/jev-latest`.
+Explicit CLI flags and `BANH_PROVIDER`/`BANH_MODEL` take precedence for local testing.
+An omitted selection preserves the native Laya default. Cloud resolves the same
+logical selection to its own managed backend; transport, endpoint, and credentials
+stay outside the workflow. No automatic model fallback occurs.
 
 To use an existing [Laya HTTP server](https://github.com/NandhaKishorM/laya/blob/main/laya/serve.py):
 
@@ -114,7 +131,10 @@ The base URL may include a reverse-proxy prefix or end in `/v1`. For example,
 `https://host/models/laya` and `https://host/models/laya/v1/` both target
 `https://host/models/laya/v1/systemone`. Query strings, fragments, and embedded
 credentials are rejected. HTTP and HTTPS are supported; requests do not follow
-redirects or retry. The timeout includes reading the response body. Closing the
+redirects. Retries are off by default; library callers can set `maxAttempts: 2`
+for connection failures and 502/503/504 responses. One total timeout covers both
+attempts, backoff, and response reading. Per-run `AbortSignal` cancellation is
+supported by HTTP execution. Closing the
 HTTP provider aborts active requests without shutting down the remote server.
 
 Native options `--model-dir`, `--cache-dir`, and `--revision` cannot be used
@@ -181,8 +201,9 @@ Linux, `~/Library/Application Support/banh/config.json` on macOS, and
 Pilot billing commands are `banh billing status`, `checkout starter`, `checkout pro`,
 `plan starter`, `plan pro`, and `portal`. Checkout and Portal print a Stripe URL.
 Cloud invocation requires an active pilot subscription; local execution does not.
-Cloud inference currently uses operator-managed Laya and accepts no customer model
-or inference-endpoint overrides.
+Cloud supports operator-managed Laya and optionally Kev-4B. Workflow model selection
+is checked against the server allowlist; customer endpoints and inference tokens
+are never accepted by Cloud. Available models depend on the Cloud deployment.
 
 `--json` emits structured results. Failed invocations print the persisted run and
 exit nonzero; inspecting a failed historical run succeeds. `runs` accepts
