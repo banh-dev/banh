@@ -69,9 +69,9 @@ export async function cloudCommand(command: 'login' | 'logout' | 'whoami' | 'dep
   if (command === 'billing') {
     const action = positionals[0] ?? 'status';
     const needsPlan = action === 'checkout' || action === 'plan';
-    if (!['status', 'checkout', 'portal', 'plan'].includes(action) ||
+    if (!['status', 'checkout', 'portal', 'plan', 'cancel'].includes(action) ||
         positionals.length > (needsPlan ? 2 : 1) || (needsPlan && !['starter','pro'].includes(positionals[1] ?? ''))) {
-      throw new Error('Usage: banh billing [status | checkout <starter|pro> | plan <starter|pro> | portal] [--json]');
+      throw new Error('Usage: banh billing [status | checkout <starter|pro> | plan <starter|pro> | portal | cancel] [--json]');
     }
   }
   if (command === 'keys') {
@@ -130,7 +130,7 @@ export async function cloudCommand(command: 'login' | 'logout' | 'whoami' | 'dep
     return;
   }
   if (command === 'billing') {
-    const action = (positionals[0] ?? 'status') as 'status' | 'checkout' | 'portal' | 'plan';
+    const action = (positionals[0] ?? 'status') as 'status' | 'checkout' | 'portal' | 'plan' | 'cancel';
     const result = await client.billing(identity.account.id, action, positionals[1]);
     stdout(values.json ? JSON.stringify(result, null, 2) : 'url' in result ? `Open ${result.url}` :
       `${result.mode ? `Billing mode: ${result.mode}\n` : ''}Plan: ${result.plan ?? 'none'}\nStatus: ${result.status}\nRuns: ${result.used} used, ${result.reserved} reserved, ${result.remaining} remaining of ${result.limit}\nPeriod ends: ${result.periodEnd ?? '—'}\nCancels at period end: ${result.cancelAtPeriodEnd ? 'yes' : 'no'}`);

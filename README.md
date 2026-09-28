@@ -176,6 +176,12 @@ Calling `createProvider()` selects native Laya. Existing direct
 
 Banh Cloud is in development.
 
+Account billing owners can use `banh billing status` to view allowance and period
+boundaries, and `banh billing cancel` to stop renewal at the end of the current
+paid period. Cancellation also works with a scheduled downgrade; paid access
+continues until the displayed end date. Repeating the command is safe.
+Use `--json` for machine-readable billing status.
+
 ## Workflow syntax
 
 ```yaml

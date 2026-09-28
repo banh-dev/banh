@@ -19,7 +19,7 @@ const help = `Usage:
 
   banh keys [list | create | revoke <key-id>] [--json] [--api-url <url>]
 
-  banh billing [status | checkout <starter|pro> | plan <starter|pro> | portal] [--json] [--api-url <url>]
+  banh billing [status | checkout <starter|pro> | plan <starter|pro> | portal | cancel] [--json] [--api-url <url>]
 
 Options:
   --version           Print the CLI version

@@ -131,9 +131,9 @@ export class CloudClient {
     throw new Error('Invalid invocation key response');
   }
 
-  async billing(accountId: string, action: 'status' | 'checkout' | 'portal' | 'plan', plan?: string): Promise<BillingStatus | { url: string }> {
+  async billing(accountId: string, action: 'status' | 'checkout' | 'portal' | 'plan' | 'cancel', plan?: string): Promise<BillingStatus | { url: string }> {
     const value = await this.request(`/accounts/${encodeURIComponent(accountId)}/billing${action === 'status' ? '' : `/${action}`}`,
-      action === 'status' ? undefined : action === 'portal' ? {} : { plan });
+      action === 'status' ? undefined : (action === 'portal' || action === 'cancel') ? {} : { plan });
     if (action === 'portal' || action === 'checkout') {
       if (!object(value) || typeof value.url !== 'string') throw new Error('Invalid billing URL');
       const url = new URL(value.url);

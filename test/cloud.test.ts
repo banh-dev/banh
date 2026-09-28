@@ -318,7 +318,7 @@ it('reports billing usage and opens only validated Stripe checkout URLs', async 
 });
 it('validates billing commands before sending credentials',async()=>{
   const deps=dependencies();
-  for(const args of [['checkout'],['checkout','enterprise'],['status','extra'],['unknown']]) await expect(cloudCommand('billing',args,deps)).rejects.toThrow('Usage');
+  for(const args of [['checkout'],['checkout','enterprise'],['status','extra'],['cancel','extra'],['unknown']]) await expect(cloudCommand('billing',args,deps)).rejects.toThrow('Usage');
   expect(deps.fetch).not.toHaveBeenCalled();
 });
 
@@ -374,4 +374,21 @@ it.each([429, 503])('explains temporary inference limits for HTTP %s without ret
   const client = new CloudClient(saved(), fetcher);
   await expect(client.invoke('acct_test', 'controls', {})).rejects.toThrow('Retry in 60 seconds. No run allowance was used.');
   expect(fetcher).toHaveBeenCalledTimes(1);
+});
+
+it('cancels billing through the owner endpoint and displays the paid access end date', async () => {
+  await saveConfig(file, saved()); const deps = dependencies();
+  const status = { mode: 'live', status: 'active', plan: 'starter', periodStart: '2026-09-01T00:00:00Z',
+    periodEnd: '2026-10-01T00:00:00Z', limit: 2000, used: 12, reserved: 0, remaining: 1988,
+    retentionDays: 7, cancelAtPeriodEnd: true };
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response(status));
+  await cloudCommand('billing', ['cancel'], deps);
+  expect(String(deps.fetch.mock.lastCall![0])).toMatch(/\/billing\/cancel$/);
+  expect(deps.fetch.mock.lastCall![1]?.method).toBe('POST');
+  expect(JSON.parse(String(deps.fetch.mock.lastCall![1]?.body))).toEqual({});
+  expect(deps.stdout.mock.lastCall![0]).toContain('Period ends: 2026-10-01T00:00:00Z');
+  expect(deps.stdout.mock.lastCall![0]).toContain('Cancels at period end: yes');
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response(status));
+  await cloudCommand('billing', ['cancel', '--json'], deps);
+  expect(JSON.parse(deps.stdout.mock.lastCall![0])).toEqual(status);
 });
