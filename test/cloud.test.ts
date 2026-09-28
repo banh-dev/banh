@@ -368,3 +368,10 @@ it('rejects malformed key commands before contacting the server', async () => {
   }
   expect(deps.fetch).not.toHaveBeenCalled();
 });
+
+it.each([429, 503])('explains temporary inference limits for HTTP %s without retrying', async status => {
+  const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('{}', { status, headers: { 'retry-after': '60' } }));
+  const client = new CloudClient(saved(), fetcher);
+  await expect(client.invoke('acct_test', 'controls', {})).rejects.toThrow('Retry in 60 seconds. No run allowance was used.');
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});

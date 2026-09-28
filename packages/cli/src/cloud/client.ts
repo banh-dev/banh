@@ -50,6 +50,11 @@ export class CloudClient {
       if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) throw new Error('Banh Cloud request timed out');
       throw new Error(`Unable to reach Banh Cloud at ${this.connection.apiUrl}. For local development, run make up in banh-cloud.`);
     }
+    const retryAfter = response.headers.get('retry-after');
+    if ([429, 503].includes(response.status) && retryAfter && /^\d+$/.test(retryAfter) && Number(retryAfter) <= 86400) {
+      await response.body?.cancel();
+      throw new Error(`Hosted inference is temporarily limited. Retry in ${retryAfter} seconds. No run allowance was used.`);
+    }
     // Do not echo arbitrary response bodies: they may contain secrets or stack traces.
     if (!response.ok && !(runRequest && [500, 502, 503, 504].includes(response.status))) {
       await response.body?.cancel();
