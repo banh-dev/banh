@@ -1,4 +1,4 @@
-# @banh/typesafe
+# @banh-dev/typesafe
 
 TypeSafe-compatible HTTP inference and decision normalization.
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { stringify } from "yaml";
-import { DslParseError, DslValidationError } from '@banh/dsl';
-import { parseProcess } from '@banh/dsl';
+import { DslParseError, DslValidationError } from '@banh-dev/dsl';
+import { parseProcess } from '@banh-dev/dsl';
 import { makeProcess, supportYaml } from "./helpers.js";
 
 describe("parseProcess", () => {

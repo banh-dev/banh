@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { compileDecisions } from '@banh/dsl';
+import { compileDecisions } from '@banh-dev/dsl';
 import { makeProcess } from "./helpers.js";
 
 it("compiles all decision primitives into one question map", () => {

@@ -1,9 +1,13 @@
 # Banh
 
-Alpha release candidate: **0.1.0-alpha.0**. Package names are provisional;
-npm publication is pending ownership of `banh` and the `@banh` scope. Do not
-assume a package currently on npm with either name is this project.
-Use the source installation below until publication is announced.
+Alpha release: **0.1.0-alpha.0**. The CLI package is `@banh-dev/cli`;
+libraries use the `@banh-dev` scope. The executable remains `banh`.
+Install the alpha CLI with:
+
+```sh
+npm install --global @banh-dev/cli@alpha
+banh --version
+```
 
 APIs and workflow syntax may change during alpha. Native Laya has been tested
 with real inference on Linux. Real Kev-4B HTTP inference has also been verified,
@@ -140,15 +144,15 @@ HTTP provider aborts active requests without shutting down the remote server.
 Native options `--model-dir`, `--cache-dir`, and `--revision` cannot be used
 with HTTP. `--model-id` is HTTP-only. HTTP execution never loads the native SDK or downloads weights,
 although this workspace still installs the native dependency. Standalone HTTP
-consumers can depend on `@banh/typesafe` and construct `TypeSafeHttpBackend`
+consumers can depend on `@banh-dev/typesafe` and construct `TypeSafeHttpBackend`
 with `baseUrl`, optional `modelId`, `token`, and `timeoutMs`; that package
 has no native inference dependency.
 
 Library callers can select a provider explicitly:
 
 ```ts
-import { createProvider } from "@banh/providers";
-import { ProcessRuntime } from "@banh/runtime";
+import { createProvider } from "@banh-dev/providers";
+import { ProcessRuntime } from "@banh-dev/runtime";
 
 const backend = await createProvider({
   provider: "http",
@@ -283,9 +287,9 @@ a retry or a second inference call.
 
 ```ts
 import { readFile } from "node:fs/promises";
-import { parseProcess } from "@banh/dsl";
-import { ProcessRuntime } from "@banh/runtime";
-import { LayaBackend } from "@banh/laya";
+import { parseProcess } from "@banh-dev/dsl";
+import { ProcessRuntime } from "@banh-dev/runtime";
+import { LayaBackend } from "@banh-dev/laya";
 
 const definition = parseProcess(await readFile("examples/support-triage.yaml", "utf8"));
 const input = JSON.parse(await readFile("examples/inputs/support-ticket.json", "utf8"));
@@ -327,12 +331,12 @@ the packages when using watch mode after changing library code.
 
 ## Repository layout
 
-- `packages/dsl` — `@banh/dsl`: YAML parsing, validation, expressions, and compilation.
-- `packages/runtime` — `@banh/runtime`: backend contract, execution, and normalized results.
-- `packages/laya` — `@banh/laya`: native Laya and compatibility exports.
-- `packages/typesafe` — `@banh/typesafe`: shared TypeSafe HTTP adapter and protocol translation.
-- `packages/providers` — `@banh/providers`: provider configuration and model selection.
-- `packages/cli` — `banh`: local commands and cloud login/logout/whoami/deploy.
+- `packages/dsl` — `@banh-dev/dsl`: YAML parsing, validation, expressions, and compilation.
+- `packages/runtime` — `@banh-dev/runtime`: backend contract, execution, and normalized results.
+- `packages/laya` — `@banh-dev/laya`: native Laya and compatibility exports.
+- `packages/typesafe` — `@banh-dev/typesafe`: shared TypeSafe HTTP adapter and protocol translation.
+- `packages/providers` — `@banh-dev/providers`: provider configuration and model selection.
+- `packages/cli` — `@banh-dev/cli`: local commands and cloud login/logout/whoami/deploy.
 - `test` — deterministic tests and an opt-in real-model test.
 
 ## Alpha release and licensing
@@ -340,7 +344,7 @@ the packages when using watch mode after changing library code.
 Bánh code is [MIT licensed](LICENSE). Model weights and dependencies retain their
 own licenses; model weights are downloaded separately and are not included in npm
 artifacts. Native inference dependencies are installed with the CLI even when you
-only use HTTP. HTTP-only library users can install `@banh/typesafe` once published.
+only use HTTP. HTTP-only library users can install `@banh-dev/typesafe` from npm.
 
 See [release preparation](RELEASING.md) and [changes](CHANGELOG.md). Release
 artifacts must pass a clean npm installation test outside the workspace.

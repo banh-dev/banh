@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseExpression, validateExpression } from '@banh/dsl';
-import { ExpressionEvaluationError, ExpressionParseError } from '@banh/dsl';
-import { evaluateExpression } from '@banh/runtime';
-import type { ExecutionContext } from '@banh/runtime';
+import { parseExpression, validateExpression } from '@banh-dev/dsl';
+import { ExpressionEvaluationError, ExpressionParseError } from '@banh-dev/dsl';
+import { evaluateExpression } from '@banh-dev/runtime';
+import type { ExecutionContext } from '@banh-dev/runtime';
 import { makeProcess } from "./helpers.js";
 
 const context: ExecutionContext = {

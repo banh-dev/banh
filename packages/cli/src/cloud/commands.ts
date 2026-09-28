@@ -1,7 +1,7 @@
 import { readFile, rm } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import type { ParseArgsConfig } from 'node:util';
-import { compileProcess, parseProcess } from '@banh/dsl';
+import { compileProcess, parseProcess } from '@banh-dev/dsl';
 import { formatRuns, formatInspection } from './history.js';
 import { CloudClient } from './client.js';
 import { configPath, DEFAULT_API_URL, envValue, normalizeApiUrl, readConfig, resolveConnection, saveConfig } from './config.js';

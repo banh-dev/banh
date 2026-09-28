@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
-import { ProcessRuntime } from '@banh/runtime';
-import { validateProcess } from '@banh/dsl';
+import { ProcessRuntime } from '@banh-dev/runtime';
+import { validateProcess } from '@banh-dev/dsl';
 import { fakeBackend } from './fake-backend.js';
 import { makeProcess } from './helpers.js';
 

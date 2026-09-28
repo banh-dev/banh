@@ -1,11 +1,14 @@
 # Preparing the alpha
 
-Target version: `0.1.0-alpha.0`. npm dist-tag: `alpha`, never `latest` for this release.
+Target version: `0.1.0-alpha.0`. Always publish this release with `--tag alpha`.
+On initial publication npm also assigned `latest`; removing it returned HTTP 400.
+Both tags currently resolve to this alpha. Continue documenting installation with
+`@alpha` and verify registry tags after each release. See
+[npm/cli #8490](https://github.com/npm/cli/issues/8490) for the matching registry behavior.
 The workspace root stays private; the six packages carry MIT licenses and public
-publish metadata. **Publication is blocked until package-name ownership is resolved.**
-The current `banh` name and `@banh` scope are provisional. Confirm ownership or rename
-all manifests/imports and repeat verification before uploading anything. Do not
-publish to an unrelated name as a shortcut.
+publish metadata. Packages use the `@banh-dev` organization scope, including
+`@banh-dev/cli`; the executable remains `banh`. Authenticate with an npm account
+with publishing access to this organization before uploading anything.
 
 ## Local verification
 
@@ -40,7 +43,7 @@ on the unconverted workspace source.
 
 ## Publication checklist
 
-1. Resolve the npm package names/scope and authenticate through local npm tooling.
+1. Authenticate through local npm tooling and confirm publishing access to `@banh-dev`.
 2. Review and commit changes; ensure CI and clean-install verification pass.
 3. Inspect the tarballs, including documentation and licenses. No model weights,
    credentials, private cloud source, or workspace links belong in them.

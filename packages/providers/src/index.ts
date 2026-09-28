@@ -1,7 +1,7 @@
-import { BackendError } from '@banh/dsl';
-import type { SystemOneBackend } from '@banh/runtime';
-import type { LayaBackendOptions } from '@banh/laya';
-import type { TypeSafeHttpBackendOptions } from '@banh/typesafe';
+import { BackendError } from '@banh-dev/dsl';
+import type { SystemOneBackend } from '@banh-dev/runtime';
+import type { LayaBackendOptions } from '@banh-dev/laya';
+import type { TypeSafeHttpBackendOptions } from '@banh-dev/typesafe';
 
 export type HttpModel = 'laya' | 'kev' | 'jev';
 export type HttpProviderOptions = Omit<TypeSafeHttpBackendOptions, 'baseUrl'> & { baseUrl?: string };
@@ -21,7 +21,7 @@ export async function createProvider(config: ProviderOptions = { provider: 'nati
   switch (config.provider) {
     case 'native': {
       if (config.model !== 'laya') throw new BackendError('Native execution supports only laya; use the http provider for kev or jev');
-      const { LayaBackend } = await import('@banh/laya');
+      const { LayaBackend } = await import('@banh-dev/laya');
       return LayaBackend.create(config.options);
     }
     case 'http': {
@@ -30,7 +30,7 @@ export async function createProvider(config: ProviderOptions = { provider: 'nati
       if (!baseUrl) throw new BackendError('HTTP provider requires --base-url or BANH_INFERENCE_BASE_URL for ' + config.model);
       if (config.model === 'jev' && !config.options.token) throw new BackendError('Jev requires an inference bearer token (BANH_INFERENCE_TOKEN)');
       const modelId = config.options.modelId ?? defaults.modelId;
-      const { TypeSafeHttpBackend } = await import('@banh/typesafe');
+      const { TypeSafeHttpBackend } = await import('@banh-dev/typesafe');
       return new TypeSafeHttpBackend({
         ...config.options, baseUrl,
         ...(modelId === undefined ? {} : { modelId }),

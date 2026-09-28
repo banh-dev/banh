@@ -1,5 +1,5 @@
 {
-  "name": "banh",
+  "name": "@banh-dev/cli",
   "version": "0.1.0-alpha.0",
   "type": "module",
   "engines": {
@@ -15,9 +15,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@banh/dsl": "workspace:*",
-    "@banh/runtime": "workspace:*",
-    "@banh/providers": "workspace:*"
+    "@banh-dev/dsl": "workspace:*",
+    "@banh-dev/runtime": "workspace:*",
+    "@banh-dev/providers": "workspace:*"
   },
   "bin": {
     "banh": "./dist/index.js"

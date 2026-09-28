@@ -1,4 +1,4 @@
-# @banh/runtime
+# @banh-dev/runtime
 
 Bánh provider-neutral workflow execution.
 

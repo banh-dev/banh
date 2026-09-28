@@ -1,4 +1,4 @@
-# @banh/dsl
+# @banh-dev/dsl
 
 Bánh workflow parsing, validation, and compilation.
 

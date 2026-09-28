@@ -2,5 +2,5 @@
 export {
   toTypeSafeQuestions as toLayaQuestions,
   normalizeTypeSafeEvaluation as normalizeLayaEvaluation,
-} from '@banh/typesafe';
-export type { TypeSafeQuestion as LayaQuestion } from '@banh/typesafe';
+} from '@banh-dev/typesafe';
+export type { TypeSafeQuestion as LayaQuestion } from '@banh-dev/typesafe';

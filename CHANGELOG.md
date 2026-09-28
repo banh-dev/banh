@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0-alpha.0 — release candidate, not published
+## 0.1.0-alpha.0 — 2026-09-28
 
 - YAML workflows with bounded `one_of`, `whether`, and `scale` decisions followed
   by deterministic flow rules, interpolation, and confidence policies.
@@ -12,7 +12,8 @@
   or the Cloud managed-model allowlist.
 - HTTP cancellation, bounded opt-in retries, structured provider errors, request
   diagnostics, and input/output token usage.
-- MIT licensing and six independently packed packages.
+- MIT licensing and six independently packed packages under `@banh-dev`, including
+  `@banh-dev/cli` with the `banh` executable.
 - Validate complete probability distributions with a tolerance for rounding;
   reject malformed cloud invocation results.
 - CLI `--version`, artifact installation smoke test, and Linux CI for Node 20/22/24.
