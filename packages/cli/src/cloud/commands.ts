@@ -117,7 +117,7 @@ export async function cloudCommand(command: 'login' | 'logout' | 'whoami' | 'dep
     const action = (positionals[0] ?? 'status') as 'status' | 'checkout' | 'portal' | 'plan';
     const result = await client.billing(identity.account.id, action, positionals[1]);
     stdout(values.json ? JSON.stringify(result, null, 2) : 'url' in result ? `Open ${result.url}` :
-      `Plan: ${result.plan ?? 'none'}\nStatus: ${result.status}\nRuns: ${result.used} used, ${result.reserved} reserved, ${result.remaining} remaining of ${result.limit}\nPeriod ends: ${result.periodEnd ?? '—'}\nCancels at period end: ${result.cancelAtPeriodEnd ? 'yes' : 'no'}`);
+      `${result.mode ? `Billing mode: ${result.mode}\n` : ''}Plan: ${result.plan ?? 'none'}\nStatus: ${result.status}\nRuns: ${result.used} used, ${result.reserved} reserved, ${result.remaining} remaining of ${result.limit}\nPeriod ends: ${result.periodEnd ?? '—'}\nCancels at period end: ${result.cancelAtPeriodEnd ? 'yes' : 'no'}`);
     return;
   }
   if (command === 'runs') {

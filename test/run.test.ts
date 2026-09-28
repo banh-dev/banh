@@ -144,3 +144,14 @@ it('resolves a workflow logical model locally and permits explicit family overri
     expect(createBackend).toHaveBeenCalledTimes(2);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
+
+it('selects HTTP automatically for Jev and preserves versioned YAML model IDs', async () => {
+  const createBackend = vi.fn(async () => fakeBackend());
+  const env = { BANH_INFERENCE_TOKEN: 'inference-only' };
+  await runCommand([workflow, '--input', input, '--model', 'jev'], { createBackend, env, stdout: vi.fn() });
+  expect(createBackend).toHaveBeenLastCalledWith({ provider: 'http', model: 'jev', options: { token: 'inference-only' } });
+  await runCommand(['examples/jev-support-triage.yaml', '--input', input], { createBackend, env, stdout: vi.fn() });
+  expect(createBackend).toHaveBeenLastCalledWith({ provider: 'http', model: 'jev', options: { token: 'inference-only', modelId: 'jev-1.13.0' } });
+  await runCommand(['examples/jev-support-triage.yaml', '--input', input, '--model-id', 'jev-preview'], { createBackend, env, stdout: vi.fn() });
+  expect(createBackend).toHaveBeenLastCalledWith({ provider: 'http', model: 'jev', options: { token: 'inference-only', modelId: 'jev-preview' } });
+});

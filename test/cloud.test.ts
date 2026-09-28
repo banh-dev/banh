@@ -305,7 +305,7 @@ it('does not leak error response bodies when history access is denied or missing
 
 it('reports billing usage and opens only validated Stripe checkout URLs', async () => {
   await saveConfig(file, saved()); const deps=dependencies();
-  const status={status:'active',plan:'starter',periodStart:'2026-09-01T00:00:00Z',periodEnd:'2026-10-01T00:00:00Z',limit:1000,used:12,reserved:1,remaining:987,retentionDays:7,cancelAtPeriodEnd:false};
+  const status={mode:'test',status:'active',plan:'starter',periodStart:'2026-09-01T00:00:00Z',periodEnd:'2026-10-01T00:00:00Z',limit:1000,used:12,reserved:1,remaining:987,retentionDays:7,cancelAtPeriodEnd:false};
   deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response(status));
   await cloudCommand('billing',['--json'],deps);
   expect(JSON.parse(deps.stdout.mock.lastCall![0])).toEqual(status);
@@ -336,4 +336,11 @@ it('uses the hosted API for a fresh login unless explicitly overridden', async (
   deps.fetch.mockResolvedValue(response(identity));
   await cloudCommand('login', [], { ...deps, env: { BANH_API_TOKEN: token } });
   expect(deps.fetch.mock.calls[0]![0]).toBe('https://api.banh.dev/v1/me');
+});
+
+it('explains the hosted input budget when a request is too large', async () => {
+  const client = new CloudClient(saved(), vi.fn<typeof fetch>().mockResolvedValue(
+    response({ message: 'private upstream details' }, 413),
+  ));
+  await expect(client.whoami()).rejects.toThrow('approximate 8,000-token input limit; rejected requests use no run allowance');
 });

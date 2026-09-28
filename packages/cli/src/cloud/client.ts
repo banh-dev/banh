@@ -14,6 +14,7 @@ export interface RunRecord extends Omit<CloudRun, 'status' | 'error'> {
 }
 export interface InspectedRun extends RunRecord { input: unknown }
 export interface BillingStatus {
+  mode?: 'test' | 'live';
   status: string; plan: string | null; periodStart: string | null; periodEnd: string | null;
   limit: number; used: number; reserved: number; remaining: number;
   retentionDays: number | null; cancelAtPeriodEnd: boolean;
@@ -57,6 +58,7 @@ export class CloudClient {
       if (response.status === 404) throw new Error('Workflow or run not found in the selected account.');
       if (response.status === 402) throw new Error('A paid subscription is required. Run banh billing checkout starter or banh billing checkout pro.');
       if (response.status === 409) throw new Error('Billing change unavailable. Check banh billing status and manage your existing subscription.');
+      if (response.status === 413) throw new Error('Cloud request is too large. Shorten the input, decision questions, or answer options. Hosted runs have an approximate 8,000-token input limit; rejected requests use no run allowance.');
       if (response.status === 429) throw new Error('Request or run allowance limit reached. Check banh billing status before retrying.');
       throw new Error(`Banh Cloud request failed (HTTP ${response.status}).`);
     }
@@ -115,7 +117,7 @@ export class CloudClient {
       if (url.protocol !== 'https:' || !url.hostname.endsWith('.stripe.com') || url.username || url.password) throw new Error('Invalid billing URL');
       return { url: value.url };
     }
-    if (!object(value) || typeof value.status !== 'string' || ![null,'starter','pro'].includes(value.plan as string | null) ||
+    if (!object(value) || (value.mode !== undefined && value.mode !== 'test' && value.mode !== 'live') || typeof value.status !== 'string' || ![null,'starter','pro'].includes(value.plan as string | null) ||
         typeof value.cancelAtPeriodEnd !== 'boolean' ||
         !['limit','used','reserved','remaining'].every(key => typeof value[key] === 'number' && Number.isInteger(value[key]) && (value[key] as number) >= 0) ||
         !['periodStart','periodEnd'].every(key => value[key] === null || (typeof value[key] === 'string' && Number.isFinite(Date.parse(value[key])))) ||

@@ -53,13 +53,13 @@ export async function runCommand(args: string[], dependencies: RunDependencies =
   const stdout = dependencies.stdout ?? console.log;
   const stderr = dependencies.stderr ?? console.error;
   const env = dependencies.env ?? process.env;
-  const provider = values.provider ?? env.BANH_PROVIDER ?? (definition.model && definition.model.provider !== 'laya' ? 'http' : 'native');
   const model = values.model ?? env.BANH_MODEL ?? definition.model?.provider ?? 'laya';
+  const provider = values.provider ?? env.BANH_PROVIDER ?? (model === 'laya' ? 'native' : 'http');
   if (model !== 'laya' && model !== 'kev' && model !== 'jev') throw new RuntimeError('Unsupported model; use laya, kev, or jev');
   if (provider !== 'native' && provider !== 'http') throw new RuntimeError('Unsupported provider; use native or http');
   if (definition.model && !values.model && !env.BANH_MODEL) {
     const supported = { laya: 'laya', kev: 'kev-4b', jev: 'jev-latest' };
-    if (definition.model.model !== supported[model]) throw new RuntimeError('Unsupported logical model for local execution');
+    if (definition.model.model !== supported[model] && !(model === 'jev' && /^jev-(?:preview|[0-9]+\.[0-9]+\.[0-9]+)$/.test(definition.model.model))) throw new RuntimeError('Unsupported logical model for local execution');
   }
   let config: ProviderOptions;
   if (provider === 'http') {
@@ -67,7 +67,8 @@ export async function runCommand(args: string[], dependencies: RunDependencies =
       throw new RuntimeError('--model-dir, --cache-dir, and --revision require the native provider');
     }
     const baseUrl = values['base-url'] ?? env.BANH_INFERENCE_BASE_URL;
-    const modelId = values['model-id'] ?? env.BANH_INFERENCE_MODEL_ID;
+    const modelId = values['model-id'] ?? env.BANH_INFERENCE_MODEL_ID
+      ?? (model === 'jev' && !values.model && !env.BANH_MODEL ? definition.model?.model : undefined);
     const timeout = values['timeout-ms'] ?? env.BANH_INFERENCE_TIMEOUT_MS;
     const token = env.BANH_INFERENCE_TOKEN;
     if (!baseUrl && model !== 'jev') throw new RuntimeError('HTTP provider requires --base-url or BANH_INFERENCE_BASE_URL for ' + model);

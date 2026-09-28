@@ -83,6 +83,12 @@ different predictions and confidence values.
 
 Kev support targets [Jared Palmer's Kev](https://github.com/jaredpalmer/kev).
 Jev uses the [official TypeSafe API](https://docs.typesafe.ai/api).
+`--model jev` automatically selects HTTP unless a provider is explicitly configured.
+Set `BANH_INFERENCE_TOKEN` for local inference; Cloud login credentials are separate.
+YAML can select `model: { provider: jev, model: jev-1.13.0 }` to pin a version,
+or use `jev-latest`/`jev-preview`. `--model-id` overrides the wire model explicitly.
+See `examples/jev-support-triage.yaml`. Cloud selects its default independently;
+OSS does not require Cloud or a particular inference service.
 The model preset configures the request; the server controls which weights
 actually execute. Providers retain their own request-size and option-count
 limits and return errors when these are exceeded.

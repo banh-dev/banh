@@ -73,7 +73,8 @@ model:
 
 This uses the HTTP Kev preset for local `banh run`; configure its server with
 `BANH_INFERENCE_BASE_URL` and optionally `BANH_INFERENCE_TOKEN`. Logical selections
-currently supported by the CLI are `laya/laya`, `kev/kev-4b`, and `jev/jev-latest`.
+currently supported by the CLI are `laya/laya`, `kev/kev-4b`, and `jev/jev-latest`. Jev also accepts `jev/jev-preview` and versioned IDs such as
+`jev/jev-1.13.0`, which are forwarded to the HTTP API.
 Explicit CLI flags and `BANH_PROVIDER`/`BANH_MODEL` take precedence for local testing.
 An omitted selection preserves the native Laya default. Transport, endpoint, and credentials
 stay outside the workflow. No automatic model fallback occurs.
@@ -96,6 +97,10 @@ different predictions and confidence values.
 | `laya` | native or http | Required for HTTP | Omitted (server routing) | Optional |
 | `kev` | http | Required | `kev-latest` | Optional |
 | `jev` | http | `https://api.typesafe.ai` | `jev-latest` | Required |
+
+Selecting `--model jev` or `--model kev` defaults to HTTP; `--provider` can
+override transport explicitly. OSS defaults remain native Laya when no model is selected.
+Cloud owns its default and model allowlist independently.
 
 Kev support targets [Jared Palmer's Kev](https://github.com/jaredpalmer/kev).
 Jev uses the [official TypeSafe API](https://docs.typesafe.ai/api).
