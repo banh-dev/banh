@@ -151,3 +151,12 @@ the local cloud and CLI integration.
 - Both alpha and latest currently point to 0.1.0-alpha.0. npm rejected removal
   of latest with HTTP 400 after browser authentication. No tags were changed.
   This matches the first-publication behavior reported in npm/cli issue #8490.
+
+## Release handoff — 2026-09-28
+
+- Release source is tagged v0.1.0-alpha.0 at 2a9f7e2. All six rebuilt packages
+  matched published file contents and modes (manifest object key order ignored).
+- Post-publication README updates follow the tag so the tagged package README
+  remains identical to the immutable npm artifact.
+- Cloud imports and public docs now use @banh-dev; landing and quickstart lead
+  with npm installation. Hosted service remains an invitation-only pilot.

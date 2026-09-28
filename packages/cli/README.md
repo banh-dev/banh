@@ -1,10 +1,8 @@
 # Banh
 
-Alpha release candidate: **0.1.0-alpha.0**. The CLI package is `@banh-dev/cli`;
+Alpha release: **0.1.0-alpha.0**. The CLI package is `@banh-dev/cli`;
 libraries use the `@banh-dev` scope. The executable remains `banh`.
-Use the source installation below until publication is announced.
-
-After publication, install the alpha CLI with:
+Install the alpha CLI with:
 
 ```sh
 npm install --global @banh-dev/cli@alpha
@@ -325,7 +323,7 @@ the packages when using watch mode after changing library code.
 Bánh code is [MIT licensed](LICENSE). Model weights and dependencies retain their
 own licenses; model weights are downloaded separately and are not included in npm
 artifacts. Native inference dependencies are installed with the CLI even when you
-only use HTTP. HTTP-only library users can install `@banh-dev/typesafe` once published.
+only use HTTP. HTTP-only library users can install `@banh-dev/typesafe` from npm.
 
 See [release preparation](https://github.com/banh-dev/banh/blob/main/RELEASING.md) and [changes](https://github.com/banh-dev/banh/blob/main/CHANGELOG.md). Release
 artifacts must pass a clean npm installation test outside the workspace.
