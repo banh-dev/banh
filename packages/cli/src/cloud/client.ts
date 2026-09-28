@@ -57,7 +57,7 @@ export class CloudClient {
       if (response.status === 403) throw new Error('Access denied. Check that your Auth0 identity is linked to the selected Banh account.');
       if (response.status === 404) throw new Error('Workflow or run not found in the selected account.');
       if (response.status === 402) throw new Error('A paid subscription is required. Run banh billing checkout starter or banh billing checkout pro.');
-      if (response.status === 409) throw new Error('Billing change unavailable. Check banh billing status and manage your existing subscription.');
+      if (response.status === 409) throw new Error('Requested change is unavailable. Check your current subscription or active invocation keys.');
       if (response.status === 413) throw new Error('Cloud request is too large. Shorten the input, decision questions, or answer options. Hosted runs have an approximate 8,000-token input limit; rejected requests use no run allowance.');
       if (response.status === 429) throw new Error('Request or run allowance limit reached. Check banh billing status before retrying.');
       throw new Error(`Banh Cloud request failed (HTTP ${response.status}).`);
@@ -106,6 +106,24 @@ export class CloudClient {
       throw new Error('Banh Cloud returned an invalid run record');
     }
     return value as InspectedRun;
+  }
+
+  async keys(accountId: string, action: 'list' | 'create' | 'revoke', keyId?: string) {
+    const value = await this.request(`/accounts/${encodeURIComponent(accountId)}/keys${action === 'revoke' ? `/${encodeURIComponent(keyId!)}/revoke` : ''}`,
+      action === 'list' ? undefined : {});
+    const validId = (id: unknown) => typeof id === 'string' && /^key_[a-zA-Z0-9]+$/.test(id);
+    if (!object(value)) throw new Error('Invalid invocation key response');
+    if (action === 'create' && validId(value.id) && typeof value.apiKey === 'string' && /^banh_sk_[a-f0-9]{64}$/.test(value.apiKey)) {
+      return { id: value.id as string, apiKey: value.apiKey };
+    }
+    if (action === 'revoke' && value.id === keyId && value.revoked === true) return { id: keyId!, revoked: true };
+    if (action === 'list' && Array.isArray(value.keys) && value.keys.length <= 100 && value.keys.every(key =>
+      object(key) && validId(key.id) && typeof key.prefix === 'string' && /^banh_sk_[a-f0-9]{10}$/.test(key.prefix) &&
+      typeof key.createdAt === 'string' && Number.isFinite(Date.parse(key.createdAt)) &&
+      (key.revokedAt === null || (typeof key.revokedAt === 'string' && Number.isFinite(Date.parse(key.revokedAt)))))) {
+      return { keys: value.keys.map(key => ({ id: key.id as string, prefix: key.prefix as string, createdAt: key.createdAt as string, revokedAt: key.revokedAt as string | null })) };
+    }
+    throw new Error('Invalid invocation key response');
   }
 
   async billing(accountId: string, action: 'status' | 'checkout' | 'portal' | 'plan', plan?: string): Promise<BillingStatus | { url: string }> {

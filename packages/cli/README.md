@@ -333,3 +333,8 @@ only use HTTP. HTTP-only library users can install `@banh-dev/typesafe` from npm
 
 See [release preparation](https://github.com/banh-dev/banh/blob/main/RELEASING.md) and [changes](https://github.com/banh-dev/banh/blob/main/CHANGELOG.md). Release
 artifacts must pass a clean npm installation test outside the workspace.
+
+Account owners can create automation credentials with `banh keys create`, inspect
+metadata with `banh keys list`, and revoke them with `banh keys revoke <key-id>`.
+The secret is shown only on creation. Store it securely and set `BANH_API_TOKEN`
+and `BANH_ACCOUNT_ID` when invoking from automation.

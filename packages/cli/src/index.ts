@@ -17,6 +17,8 @@ const help = `Usage:
   banh runs <workflow> [--limit <1-100>] [--offset <0-10000>] [--json] [--api-url <url>]
   banh inspect <run-id> [--json] [--api-url <url>]
 
+  banh keys [list | create | revoke <key-id>] [--json] [--api-url <url>]
+
   banh billing [status | checkout <starter|pro> | plan <starter|pro> | portal] [--json] [--api-url <url>]
 
 Options:
@@ -47,7 +49,7 @@ try {
   }
   else if (args[0] === 'validate' && args.length === 2) await validateCommand(args[1]!);
   else if (args[0] === 'run') await runCommand(args.slice(1));
-  else if (args[0] === 'login' || args[0] === 'logout' || args[0] === 'whoami' || args[0] === 'deploy' || args[0] === 'invoke' || args[0] === 'runs' || args[0] === 'inspect' || args[0] === 'billing') await cloudCommand(args[0], args.slice(1));
+  else if (args[0] === 'login' || args[0] === 'logout' || args[0] === 'whoami' || args[0] === 'deploy' || args[0] === 'invoke' || args[0] === 'runs' || args[0] === 'inspect' || args[0] === 'billing' || args[0] === 'keys') await cloudCommand(args[0], args.slice(1));
   else throw new Error(help);
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));

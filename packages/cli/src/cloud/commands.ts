@@ -18,7 +18,7 @@ export interface CloudDependencies {
 }
 
 /** Cloud commands share configuration, but local validate/run never use it. */
-export async function cloudCommand(command: 'login' | 'logout' | 'whoami' | 'deploy' | 'invoke' | 'runs' | 'inspect' | 'billing', args: string[], dependencies: CloudDependencies = {}) {
+export async function cloudCommand(command: 'login' | 'logout' | 'whoami' | 'deploy' | 'invoke' | 'runs' | 'inspect' | 'billing' | 'keys', args: string[], dependencies: CloudDependencies = {}) {
   const env = dependencies.env ?? process.env;
   const path = dependencies.configFile ?? configPath(env);
   const stdout = dependencies.stdout ?? console.log;
@@ -29,7 +29,7 @@ export async function cloudCommand(command: 'login' | 'logout' | 'whoami' | 'dep
   };
   const { values, positionals } = parseArgs({ args, options, strict: true, allowPositionals: true });
   const positional = command === 'deploy' ? ' <workflow.yaml>' : command === 'inspect' ? ' <run-id>' : ['invoke', 'runs'].includes(command) ? ' <workflow>' : '';
-  if (command !== 'billing' && positionals.length !== (positional ? 1 : 0)) throw new Error(`Usage: banh ${command}${positional}`);
+  if (!['billing', 'keys'].includes(command) && positionals.length !== (positional ? 1 : 0)) throw new Error(`Usage: banh ${command}${positional}`);
   const pageNumber = (value: unknown, fallback: number, min: number, max: number, name: string) => {
     if (value === undefined) return fallback;
     if (typeof value !== 'string' || !/^\d+$/.test(value) || Number(value) < min || Number(value) > max) throw new Error(`${name} must be an integer from ${min} to ${max}`);
@@ -74,6 +74,13 @@ export async function cloudCommand(command: 'login' | 'logout' | 'whoami' | 'dep
       throw new Error('Usage: banh billing [status | checkout <starter|pro> | plan <starter|pro> | portal] [--json]');
     }
   }
+  if (command === 'keys') {
+    const action = positionals[0] ?? 'list';
+    if (!['list', 'create', 'revoke'].includes(action) ||
+        (action === 'revoke' ? positionals.length !== 2 || !/^key_[a-zA-Z0-9]+$/.test(positionals[1]!) : positionals.length > 1)) {
+      throw new Error('Usage: banh keys [list | create | revoke <key-id>] [--json]');
+    }
+  }
   const saved = await readConfig(path);
   const override = typeof values['api-url'] === 'string' ? values['api-url'] : undefined;
   if (command === 'login') {
@@ -113,6 +120,15 @@ export async function cloudCommand(command: 'login' | 'logout' | 'whoami' | 'dep
   }
   const identity = await client.whoami(connection.accountId);
   if (connection.accountId && connection.accountId !== identity.account.id) throw new Error('Configured account does not match this Auth0 access token');
+  if (command === 'keys') {
+    const action = (positionals[0] ?? 'list') as 'list' | 'create' | 'revoke';
+    const result = await client.keys(identity.account.id, action, positionals[1]);
+    stdout(values.json ? JSON.stringify(result, null, 2) : 'apiKey' in result ?
+      `Key: ${result.id}\n${result.apiKey}\nSave this secret now; it cannot be retrieved again.` : 'keys' in result ?
+      result.keys.map(key => `${key.id}  ${key.prefix}…  ${key.revokedAt ? 'revoked' : 'active'}`).join('\n') || 'No invocation keys.' :
+      `Revoked ${result.id}`);
+    return;
+  }
   if (command === 'billing') {
     const action = (positionals[0] ?? 'status') as 'status' | 'checkout' | 'portal' | 'plan';
     const result = await client.billing(identity.account.id, action, positionals[1]);

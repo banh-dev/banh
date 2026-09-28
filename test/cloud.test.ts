@@ -344,3 +344,27 @@ it('explains the hosted input budget when a request is too large', async () => {
   ));
   await expect(client.whoami()).rejects.toThrow('approximate 8,000-token input limit; rejected requests use no run allowance');
 });
+
+it('creates, lists, and revokes invocation keys without saving the secret', async () => {
+  await saveConfig(file, saved());
+  const deps = dependencies();
+  const apiKey = `banh_sk_${'a'.repeat(64)}`;
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response({ id: 'key_test', apiKey }, 201));
+  await cloudCommand('keys', ['create', '--json'], deps);
+  expect(JSON.parse(deps.stdout.mock.calls[0]![0])).toEqual({ id: 'key_test', apiKey });
+  expect(await readConfig(file)).toEqual(saved());
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response({ keys: [{ id: 'key_test', prefix: apiKey.slice(0, 18), createdAt: new Date().toISOString(), revokedAt: null, apiKey }] }));
+  deps.stdout.mockClear();
+  await cloudCommand('keys', ['list', '--json'], deps);
+  expect(deps.stdout.mock.calls[0]![0]).not.toContain(apiKey);
+  deps.fetch.mockResolvedValueOnce(response(identity)).mockResolvedValueOnce(response({ id: 'key_test', revoked: true }));
+  await cloudCommand('keys', ['revoke', 'key_test'], deps);
+  expect(deps.fetch.mock.calls.at(-1)![0]).toBe('http://localhost:3000/v1/accounts/acct_test/keys/key_test/revoke');
+});
+it('rejects malformed key commands before contacting the server', async () => {
+  const deps = dependencies();
+  for (const args of [['unknown'], ['revoke'], ['revoke', '../other'], ['create', 'extra']]) {
+    await expect(cloudCommand('keys', args, deps)).rejects.toThrow('Usage: banh keys');
+  }
+  expect(deps.fetch).not.toHaveBeenCalled();
+});
