@@ -10,8 +10,8 @@ banh --version
 ```
 
 APIs and workflow syntax may change during alpha. Native Laya has been tested
-with real inference on Linux. Real Kev-4B HTTP inference has also been verified,
-including hosted execution and a cached cold start. HTTP Laya/Jev have fixture-based
+with real inference on Linux. Real Kev-4B HTTP inference has also been verified.
+HTTP Laya/Jev have fixture-based
 coverage; their live endpoints and native macOS/Windows inference remain unverified.
 
 A small TypeScript runtime and YAML language for bounded System One decisions,
@@ -75,8 +75,7 @@ This uses the HTTP Kev preset for local `banh run`; configure its server with
 `BANH_INFERENCE_BASE_URL` and optionally `BANH_INFERENCE_TOKEN`. Logical selections
 currently supported by the CLI are `laya/laya`, `kev/kev-4b`, and `jev/jev-latest`.
 Explicit CLI flags and `BANH_PROVIDER`/`BANH_MODEL` take precedence for local testing.
-An omitted selection preserves the native Laya default. Cloud resolves the same
-logical selection to its own managed backend; transport, endpoint, and credentials
+An omitted selection preserves the native Laya default. Transport, endpoint, and credentials
 stay outside the workflow. No automatic model fallback occurs.
 
 To use an existing [Laya HTTP server](https://github.com/NandhaKishorM/laya/blob/main/laya/serve.py):
@@ -128,8 +127,7 @@ banh run examples/support-triage.yaml --input examples/inputs/support-ticket.jso
 | — | `BANH_INFERENCE_TOKEN` | No authentication; required for Jev |
 
 Flags override environment variables, which override preset defaults. Supply the bearer token through
-`BANH_INFERENCE_TOKEN`; it is separate from cloud login credentials and
-`BANH_API_TOKEN`. These settings apply to `run`, not cloud `invoke`.
+`BANH_INFERENCE_TOKEN`. These settings apply to `banh run`.
 
 The base URL may include a reverse-proxy prefix or end in `/v1`. For example,
 `https://host/models/laya` and `https://host/models/laya/v1/` both target
@@ -169,50 +167,9 @@ try {
 Calling `createProvider()` selects native Laya. Existing direct
 `LayaBackend.create()` calls remain supported.
 
-## Optional Bánh Cloud commands
+## Banh Cloud
 
-Local validation and inference do not require a cloud account. Cloud commands
-default to `https://api.banh.dev`. The hosted service is currently an invitation-only
-private pilot with sandbox billing; installing this CLI does not grant access.
-
-```sh
-banh login
-banh whoami
-banh deploy examples/warranty-claim.yaml
-banh invoke warranty_triage --input examples/inputs/warranty-claim.json --json
-banh runs warranty_triage --limit 10
-banh inspect run_YOUR_RUN_ID --json
-banh logout
-```
-
-Login uses Auth0 device authorization: follow the displayed verification URL and
-code. `--no-browser` suppresses opening a browser. No client secret is needed.
-Saved access tokens expire; repeat login when prompted. Logout removes local
-credentials but does not revoke tokens or end your browser session.
-
-Cloud commands accept `--api-url` (except logout). Configuration precedence is
-flag, `BANH_API_URL`, saved URL, then `https://api.banh.dev`. Use
-`--api-url http://127.0.0.1:3000` for a local cloud server. Remote URLs require HTTPS.
-Saved tokens are bound to their API origin and are never forwarded to another
-origin. `BANH_API_TOKEN` overrides saved credentials; `BANH_ACCOUNT_ID` selects
-an account. Invocation keys require an explicit account and cannot access history.
-
-Credentials are stored as plaintext in a private file, with owner-only permissions
-on Unix: `$XDG_CONFIG_HOME/banh/config.json` (or `~/.config/banh/config.json`) on
-Linux, `~/Library/Application Support/banh/config.json` on macOS, and
-`%APPDATA%/banh/config.json` on Windows. `BANH_CONFIG_DIR` selects an isolated profile.
-
-Pilot billing commands are `banh billing status`, `checkout starter`, `checkout pro`,
-`plan starter`, `plan pro`, and `portal`. Checkout and Portal print a Stripe URL.
-Cloud invocation requires an active pilot subscription; local execution does not.
-Cloud supports operator-managed Laya and optionally Kev-4B. Workflow model selection
-is checked against the server allowlist; customer endpoints and inference tokens
-are never accepted by Cloud. Available models depend on the Cloud deployment.
-
-`--json` emits structured results. Failed invocations print the persisted run and
-exit nonzero; inspecting a failed historical run succeeds. `runs` accepts
-`--limit` (1–100, default 50) and `--offset` (0–10000, default 0). Validation and
-local input checks happen before deployment or model loading.
+Banh Cloud is in development.
 
 ## Workflow syntax
 
@@ -336,7 +293,7 @@ the packages when using watch mode after changing library code.
 - `packages/laya` — `@banh-dev/laya`: native Laya and compatibility exports.
 - `packages/typesafe` — `@banh-dev/typesafe`: shared TypeSafe HTTP adapter and protocol translation.
 - `packages/providers` — `@banh-dev/providers`: provider configuration and model selection.
-- `packages/cli` — `@banh-dev/cli`: local commands and cloud login/logout/whoami/deploy.
+- `packages/cli` — `@banh-dev/cli`: workflow validation and local execution.
 - `test` — deterministic tests and an opt-in real-model test.
 
 ## Alpha release and licensing
