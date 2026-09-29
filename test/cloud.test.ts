@@ -392,3 +392,14 @@ it('cancels billing through the owner endpoint and displays the paid access end 
   await cloudCommand('billing', ['cancel', '--json'], deps);
   expect(JSON.parse(deps.stdout.mock.lastCall![0])).toEqual(status);
 });
+
+it('explains a full early release without exposing arbitrary server messages', async () => {
+  const deps = dependencies();
+  deps.fetch.mockResolvedValue(response({ error: { code: 'EARLY_ACCESS_FULL', message: token } }, 403));
+  await expect(cloudCommand('login', [], { ...deps, env: { BANH_API_TOKEN: token } })).rejects.toThrow('Early access is currently full');
+  expect(await readConfig(file)).toBeUndefined();
+  for (const body of [{ error: { code: 'OTHER', message: token } }, null]) {
+    deps.fetch.mockResolvedValue(response(body, 403));
+    await expect(cloudCommand('login', [], { ...deps, env: { BANH_API_TOKEN: token } })).rejects.toThrow('Access denied');
+  }
+});

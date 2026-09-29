@@ -57,9 +57,15 @@ export class CloudClient {
     }
     // Do not echo arbitrary response bodies: they may contain secrets or stack traces.
     if (!response.ok && !(runRequest && [500, 502, 503, 504].includes(response.status))) {
+      if (response.status === 403) {
+        const body: unknown = await response.json().catch(() => undefined);
+        if (object(body) && object(body.error) && body.error.code === 'EARLY_ACCESS_FULL') {
+          throw new Error('Early access is currently full. Please check back later.');
+        }
+        throw new Error('Access denied. Check that your Auth0 identity is linked to the selected Banh account.');
+      }
       await response.body?.cancel();
       if (response.status === 401) throw new Error('Authentication failed. Run banh login to obtain a valid Auth0 access token.');
-      if (response.status === 403) throw new Error('Access denied. Check that your Auth0 identity is linked to the selected Banh account.');
       if (response.status === 404) throw new Error('Workflow or run not found in the selected account.');
       if (response.status === 402) throw new Error('A paid subscription is required. Run banh billing checkout starter or banh billing checkout pro.');
       if (response.status === 409) throw new Error('Requested change is unavailable. Check your current subscription or active invocation keys.');
