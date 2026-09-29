@@ -1,4 +1,4 @@
-import type { SystemOneQuestion } from '@banh-dev/dsl';
+import type { SystemOneQuestion } from '@banh/dsl';
 import type { DecisionResult } from './result.js';
 
 export interface ProviderDiagnostics {

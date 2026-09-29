@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { BackendError } from '@banh-dev/dsl';
-import type { SystemOneQuestion } from '@banh-dev/dsl';
-import type { DecisionResult, SystemOneEvaluation } from '@banh-dev/runtime';
+import { BackendError } from '@banh/dsl';
+import type { SystemOneQuestion } from '@banh/dsl';
+import type { DecisionResult, SystemOneEvaluation } from '@banh/runtime';
 
 /** TypeSafe wire format belongs to the adapter, never the compiler or runtime. */
 export type TypeSafeQuestion =

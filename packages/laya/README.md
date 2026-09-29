@@ -1,4 +1,4 @@
-# @banh-dev/laya
+# @banh/laya
 
 Native Laya inference for Bánh.
 

@@ -1,5 +1,5 @@
-import { ExpressionEvaluationError } from '@banh-dev/dsl';
-import type { ExpressionAst } from '@banh-dev/dsl';
+import { ExpressionEvaluationError } from '@banh/dsl';
+import type { ExpressionAst } from '@banh/dsl';
 import type { ExecutionContext } from "./execution-context.js";
 
 /** Compare typed values without coercion; unavailable metadata is an error. */

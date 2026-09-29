@@ -25,8 +25,8 @@
   or the Cloud managed-model allowlist.
 - HTTP cancellation, bounded opt-in retries, structured provider errors, request
   diagnostics, and input/output token usage.
-- MIT licensing and six independently packed packages under `@banh-dev`, including
-  `@banh-dev/cli` with the `banh` executable.
+- MIT licensing and six independently packed packages under `@banh`, including
+  `@banh/cli` with the `banh` executable.
 - Validate complete probability distributions with a tolerance for rounding;
   reject malformed cloud invocation results.
 - CLI `--version`, artifact installation smoke test, and Linux CI for Node 20/22/24.

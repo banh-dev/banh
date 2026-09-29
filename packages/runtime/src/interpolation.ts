@@ -1,6 +1,6 @@
-import { ExpressionEvaluationError } from '@banh-dev/dsl';
-import { parseTemplate } from '@banh-dev/dsl';
-import type { JsonValue } from '@banh-dev/dsl';
+import { ExpressionEvaluationError } from '@banh/dsl';
+import { parseTemplate } from '@banh/dsl';
+import type { JsonValue } from '@banh/dsl';
 import type { ExecutionContext } from './execution-context.js';
 
 /** Recursively copy a return value, preserving the type of referenced results. */

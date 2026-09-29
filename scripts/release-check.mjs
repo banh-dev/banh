@@ -44,7 +44,7 @@ try {
   await mkdir(consumer);
   await writeFile(join(consumer, 'package.json'), JSON.stringify({ private: true, type: 'module' }));
   await run('npm', ['install', '--no-audit', '--no-fund', ...tarballs], consumer);
-  for (const name of packages.map(p => '@banh-dev/' + p)) {
+  for (const name of packages.map(p => '@banh/' + p)) {
     const dir = join(consumer, 'node_modules', name);
     const manifest = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'));
     assert.equal(manifest.version, releaseVersion);
@@ -52,11 +52,11 @@ try {
     assert.ok((await readFile(join(dir, 'README.md'), 'utf8')).length);
     for (const [dependency, version] of Object.entries(manifest.dependencies ?? {})) {
       assert.ok(!version.startsWith('workspace:'));
-      if (dependency.startsWith('@banh-dev/')) assert.equal(version, releaseVersion);
+      if (dependency.startsWith('@banh/')) assert.equal(version, releaseVersion);
     }
   }
   await run('node', ['--input-type=module', '-e',
-    'await Promise.all(["@banh-dev/dsl","@banh-dev/runtime","@banh-dev/laya","@banh-dev/providers","@banh-dev/typesafe"].map(p => import(p)))'], consumer);
+    'await Promise.all(["@banh/dsl","@banh/runtime","@banh/laya","@banh/providers","@banh/typesafe"].map(p => import(p)))'], consumer);
   const cli = join(consumer, 'node_modules', '.bin', 'banh');
   const help = await run(cli, ['--help'], consumer);
   assert.match(help.stdout, /https:\/\/api.banh.dev/);

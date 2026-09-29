@@ -1,5 +1,5 @@
 {
-  "name": "@banh-dev/laya",
+  "name": "@banh/laya",
   "version": "0.1.0-alpha.1",
   "type": "module",
   "engines": {
@@ -15,10 +15,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@banh-dev/dsl": "workspace:*",
-    "@banh-dev/runtime": "workspace:*",
+    "@banh/dsl": "workspace:*",
+    "@banh/runtime": "workspace:*",
     "@receptron/laya": "^0.1.2",
-    "@banh-dev/typesafe": "workspace:*"
+    "@banh/typesafe": "workspace:*"
   },
   "exports": {
     ".": {

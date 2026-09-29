@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { compileProcess } from '@banh-dev/dsl';
+import { compileProcess } from '@banh/dsl';
 import { makeProcess } from './helpers.js';
 
 it('preserves logical model selection without changing compiled questions', () => {

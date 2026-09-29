@@ -1,5 +1,5 @@
-import type { SystemOneBackend, SystemOneEvaluation } from '@banh-dev/runtime';
-import type { SystemOneQuestion } from '@banh-dev/dsl';
+import type { SystemOneBackend, SystemOneEvaluation } from '@banh/runtime';
+import type { SystemOneQuestion } from '@banh/dsl';
 
 export class FakeSystemOneBackend implements SystemOneBackend {
   calls: { state: unknown; questions: Record<string, SystemOneQuestion> }[] = [];

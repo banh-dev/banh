@@ -1,4 +1,4 @@
-# @banh-dev/providers
+# @banh/providers
 
 Bánh native and HTTP provider selection.
 

@@ -11,19 +11,19 @@ importers:
 
   .:
     devDependencies:
-      '@banh-dev/dsl':
+      '@banh/dsl':
         specifier: workspace:*
         version: link:packages/dsl
-      '@banh-dev/laya':
+      '@banh/laya':
         specifier: workspace:*
         version: link:packages/laya
-      '@banh-dev/providers':
+      '@banh/providers':
         specifier: workspace:*
         version: link:packages/providers
-      '@banh-dev/runtime':
+      '@banh/runtime':
         specifier: workspace:*
         version: link:packages/runtime
-      '@banh-dev/typesafe':
+      '@banh/typesafe':
         specifier: workspace:*
         version: link:packages/typesafe
       '@receptron/laya':
@@ -50,13 +50,13 @@ importers:
 
   packages/cli:
     dependencies:
-      '@banh-dev/dsl':
+      '@banh/dsl':
         specifier: workspace:*
         version: link:../dsl
-      '@banh-dev/providers':
+      '@banh/providers':
         specifier: workspace:*
         version: link:../providers
-      '@banh-dev/runtime':
+      '@banh/runtime':
         specifier: workspace:*
         version: link:../runtime
 
@@ -71,13 +71,13 @@ importers:
 
   packages/laya:
     dependencies:
-      '@banh-dev/dsl':
+      '@banh/dsl':
         specifier: workspace:*
         version: link:../dsl
-      '@banh-dev/runtime':
+      '@banh/runtime':
         specifier: workspace:*
         version: link:../runtime
-      '@banh-dev/typesafe':
+      '@banh/typesafe':
         specifier: workspace:*
         version: link:../typesafe
       '@receptron/laya':
@@ -86,22 +86,22 @@ importers:
 
   packages/providers:
     dependencies:
-      '@banh-dev/dsl':
+      '@banh/dsl':
         specifier: workspace:*
         version: link:../dsl
-      '@banh-dev/laya':
+      '@banh/laya':
         specifier: workspace:*
         version: link:../laya
-      '@banh-dev/runtime':
+      '@banh/runtime':
         specifier: workspace:*
         version: link:../runtime
-      '@banh-dev/typesafe':
+      '@banh/typesafe':
         specifier: workspace:*
         version: link:../typesafe
 
   packages/runtime:
     dependencies:
-      '@banh-dev/dsl':
+      '@banh/dsl':
         specifier: workspace:*
         version: link:../dsl
       zod:
@@ -110,10 +110,10 @@ importers:
 
   packages/typesafe:
     dependencies:
-      '@banh-dev/dsl':
+      '@banh/dsl':
         specifier: workspace:*
         version: link:../dsl
-      '@banh-dev/runtime':
+      '@banh/runtime':
         specifier: workspace:*
         version: link:../runtime
       zod:

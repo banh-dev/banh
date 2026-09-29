@@ -1,5 +1,5 @@
 {
-  "name": "@banh-dev/runtime",
+  "name": "@banh/runtime",
   "version": "0.1.0-alpha.1",
   "type": "module",
   "engines": {
@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@banh-dev/dsl": "workspace:*",
+    "@banh/dsl": "workspace:*",
     "zod": "^4.6.5"
   },
   "exports": {

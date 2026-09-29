@@ -32,7 +32,7 @@ status at the end of this file.
 
 ## Package extraction and cloud foundation
 
-- Split the OSS code into `@banh-dev/dsl`, `@banh-dev/runtime`, `@banh-dev/laya`, and `@banh-dev/cli`.
+- Split the OSS code into `@banh/dsl`, `@banh/runtime`, `@banh/laya`, and `@banh/cli`.
 - Added a pnpm workspace, package builds, and public package imports in tests.
 - Created a separate sibling `banh-cloud` repository with a Fastify health endpoint
   and a backend-injected execution service using the shared runtime.
@@ -135,7 +135,7 @@ the local cloud and CLI integration.
 - Probability distributions require complete expected keys and totals within a
   rounding tolerance. Cloud invocation responses require output/decisions/trace.
 - Added CLI version output, a clean tarball installation smoke test, and Linux CI.
-- Package names now use the @banh-dev organization scope, including @banh-dev/cli.
+- Package names now use the @banh organization scope, including @banh/cli.
   The executable remains banh. All six packages were published as 0.1.0-alpha.0
   with the alpha tag on 2026-09-28.
 
@@ -145,7 +145,7 @@ the local cloud and CLI integration.
 - Account package listing includes all six packages; CLI access is public and no
   staged CLI release is pending approval.
 - Initial registry requests returned E404, but public availability is now verified.
-- Fresh npm installation of @banh-dev/cli@alpha passed all six package version,
+- Fresh npm installation of @banh/cli@alpha passed all six package version,
   export, executable, YAML validation, and HTTP workflow checks. Registry integrity
   matches all six tested tarballs in artifacts/alpha.
 - Both alpha and latest currently point to 0.1.0-alpha.0. npm rejected removal
@@ -158,5 +158,5 @@ the local cloud and CLI integration.
   matched published file contents and modes (manifest object key order ignored).
 - Post-publication README updates follow the tag so the tagged package README
   remains identical to the immutable npm artifact.
-- Cloud imports and public docs now use @banh-dev; landing and quickstart lead
+- Cloud imports and public docs now use @banh; landing and quickstart lead
   with npm installation. Hosted service remains an invitation-only pilot.

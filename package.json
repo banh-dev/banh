@@ -20,14 +20,14 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11",
-    "@banh-dev/dsl": "workspace:*",
-    "@banh-dev/runtime": "workspace:*",
-    "@banh-dev/laya": "workspace:*",
+    "@banh/dsl": "workspace:*",
+    "@banh/runtime": "workspace:*",
+    "@banh/laya": "workspace:*",
     "@receptron/laya": "^0.1.2",
     "yaml": "^2.9.1",
     "zod": "^4.6.5",
-    "@banh-dev/providers": "workspace:*",
-    "@banh-dev/typesafe": "workspace:*"
+    "@banh/providers": "workspace:*",
+    "@banh/typesafe": "workspace:*"
   },
   "pnpm": {
     "overrides": {

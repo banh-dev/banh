@@ -1,4 +1,4 @@
-import { BackendError } from '@banh-dev/dsl';
+import { BackendError } from '@banh/dsl';
 import type { ProviderDiagnostics } from './system-one-backend.js';
 
 export type ProviderErrorCode = 'PROVIDER_UNAVAILABLE' | 'PROVIDER_TIMEOUT' | 'PROVIDER_UNAUTHORIZED'

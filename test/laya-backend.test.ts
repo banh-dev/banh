@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from 'vitest';
-import { LayaBackend, normalizeLayaEvaluation, toLayaQuestions } from '@banh-dev/laya';
-import { compileDecisions } from '@banh-dev/dsl';
+import { LayaBackend, normalizeLayaEvaluation, toLayaQuestions } from '@banh/laya';
+import { compileDecisions } from '@banh/dsl';
 import { makeProcess } from './helpers.js';
 
 const sdk = vi.hoisted(() => ({ load: vi.fn(), systemOne: vi.fn(), close: vi.fn() }));

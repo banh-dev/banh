@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { compileProcess } from '@banh-dev/dsl';
-import { BackendError, RuntimeError } from '@banh-dev/dsl';
+import { compileProcess } from '@banh/dsl';
+import { BackendError, RuntimeError } from '@banh/dsl';
 import type { SystemOneBackend, ProviderExecutionOptions } from './system-one-backend.js';
 import type { ProcessExecutionResult } from './result.js';
 import { evaluateExpression } from './evaluator.js';

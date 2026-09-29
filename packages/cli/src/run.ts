@@ -1,12 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
-import type { SystemOneBackend } from '@banh-dev/runtime';
-import { createProvider } from '@banh-dev/providers';
-import type { ProviderOptions } from '@banh-dev/providers';
-import { parseProcess } from '@banh-dev/dsl';
-import { RuntimeError } from '@banh-dev/dsl';
-import { ProcessRuntime, validateInput } from '@banh-dev/runtime';
-import type { ProcessExecutionResult } from '@banh-dev/runtime';
+import type { SystemOneBackend } from '@banh/runtime';
+import { createProvider } from '@banh/providers';
+import type { ProviderOptions } from '@banh/providers';
+import { parseProcess } from '@banh/dsl';
+import { RuntimeError } from '@banh/dsl';
+import { ProcessRuntime, validateInput } from '@banh/runtime';
+import type { ProcessExecutionResult } from '@banh/runtime';
 
 /** Testable command boundary; the default factory loads the real model lazily. */
 export interface RunDependencies {

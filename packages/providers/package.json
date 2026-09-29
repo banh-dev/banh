@@ -1,5 +1,5 @@
 {
-  "name": "@banh-dev/providers",
+  "name": "@banh/providers",
   "version": "0.1.0-alpha.1",
   "type": "module",
   "engines": {
@@ -15,10 +15,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@banh-dev/dsl": "workspace:*",
-    "@banh-dev/runtime": "workspace:*",
-    "@banh-dev/laya": "workspace:*",
-    "@banh-dev/typesafe": "workspace:*"
+    "@banh/dsl": "workspace:*",
+    "@banh/runtime": "workspace:*",
+    "@banh/laya": "workspace:*",
+    "@banh/typesafe": "workspace:*"
   },
   "exports": {
     ".": {

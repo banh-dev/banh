@@ -1,7 +1,7 @@
-import { BackendError } from '@banh-dev/dsl';
-import type { SystemOneQuestion } from '@banh-dev/dsl';
-import { ProviderError } from '@banh-dev/runtime';
-import type { ProviderErrorCode, ProviderDiagnostics, ProviderExecutionOptions, SystemOneBackend, SystemOneEvaluation } from '@banh-dev/runtime';
+import { BackendError } from '@banh/dsl';
+import type { SystemOneQuestion } from '@banh/dsl';
+import { ProviderError } from '@banh/runtime';
+import type { ProviderErrorCode, ProviderDiagnostics, ProviderExecutionOptions, SystemOneBackend, SystemOneEvaluation } from '@banh/runtime';
 import { setTimeout as delay } from 'node:timers/promises';
 import { normalizeTypeSafeEvaluation, toTypeSafeQuestions } from './protocol.js';
 

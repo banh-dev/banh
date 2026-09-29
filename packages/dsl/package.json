@@ -1,5 +1,5 @@
 {
-  "name": "@banh-dev/dsl",
+  "name": "@banh/dsl",
   "version": "0.1.0-alpha.1",
   "type": "module",
   "engines": {

@@ -1,8 +1,8 @@
 import { normalizeLayaEvaluation, toLayaQuestions } from './protocol.js';
 import type { Laya } from '@receptron/laya';
-import type { SystemOneQuestion } from '@banh-dev/dsl';
-import { BackendError } from '@banh-dev/dsl';
-import type { SystemOneBackend, SystemOneEvaluation } from '@banh-dev/runtime';
+import type { SystemOneQuestion } from '@banh/dsl';
+import { BackendError } from '@banh/dsl';
+import type { SystemOneBackend, SystemOneEvaluation } from '@banh/runtime';
 
 /** Local model configuration; absent modelDir downloads and caches the bundle. */
 export interface LayaBackendOptions {

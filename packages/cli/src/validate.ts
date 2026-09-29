@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { parseProcess } from '@banh-dev/dsl';
+import { parseProcess } from '@banh/dsl';
 
 export async function validateCommand(path: string): Promise<void> {
   const definition = parseProcess(await readFile(path, 'utf8'));

@@ -3,12 +3,12 @@
 The public OSS repository contains six packages:
 
 ```text
-banh (CLI) ──────┬── @banh-dev/dsl
-                ├── @banh-dev/runtime ── @banh-dev/dsl
-                └── @banh-dev/providers
-                       ├── native: @banh-dev/laya ── @receptron/laya (lazy)
-                       │                └── @banh-dev/typesafe (translation)
-                       └── HTTP: @banh-dev/typesafe ── Laya / Kev / Jev APIs
+banh (CLI) ──────┬── @banh/dsl
+                ├── @banh/runtime ── @banh/dsl
+                └── @banh/providers
+                       ├── native: @banh/laya ── @receptron/laya (lazy)
+                       │                └── @banh/typesafe (translation)
+                       └── HTTP: @banh/typesafe ── Laya / Kev / Jev APIs
 ```
 
 The DSL owns parsing, schema validation, expression ASTs, and question compilation.

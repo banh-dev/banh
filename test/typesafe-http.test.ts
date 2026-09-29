@@ -2,11 +2,11 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { createServer } from 'node:http';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { once } from 'node:events';
-import { LayaBackend } from '@banh-dev/laya';
-import { TypeSafeHttpBackend, toTypeSafeQuestions } from '@banh-dev/typesafe';
-import { createProvider } from '@banh-dev/providers';
-import { compileDecisions } from '@banh-dev/dsl';
-import { ProcessRuntime } from '@banh-dev/runtime';
+import { LayaBackend } from '@banh/laya';
+import { TypeSafeHttpBackend, toTypeSafeQuestions } from '@banh/typesafe';
+import { createProvider } from '@banh/providers';
+import { compileDecisions } from '@banh/dsl';
+import { ProcessRuntime } from '@banh/runtime';
 import { makeProcess } from './helpers.js';
 
 const sdk = vi.hoisted(() => ({ load: vi.fn() }));
